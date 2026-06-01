@@ -136,6 +136,40 @@ class ServiceResource extends Resource
                             ->maxLength(500),
                         Forms\Components\TextInput::make('seo_keywords')
                             ->label('SEO ключові слова'),
+                        Forms\Components\TextInput::make('meta_title')
+                            ->label('Meta title')
+                            ->maxLength(70),
+                        Forms\Components\TextInput::make('og_title')
+                            ->label('OG title')
+                            ->maxLength(70),
+                        Forms\Components\Textarea::make('og_description')
+                            ->label('OG description')
+                            ->rows(2),
+                        Forms\Components\FileUpload::make('og_image')
+                            ->label('OG image')
+                            ->image()
+                            ->directory('src/seo/services')
+                            ->disk('public'),
+                        Forms\Components\TextInput::make('robots')
+                            ->label('Robots'),
+                        Forms\Components\TextInput::make('canonical_path')
+                            ->label('Canonical path'),
+                        Forms\Components\Repeater::make('faq')
+                            ->label('FAQ (питання та відповіді для SEO)')
+                            ->schema([
+                                Forms\Components\TextInput::make('question')
+                                    ->label('Питання')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\Textarea::make('answer')
+                                    ->label('Відповідь')
+                                    ->required()
+                                    ->rows(3),
+                            ])
+                            ->defaultItems(0)
+                            ->collapsible()
+                            ->columnSpanFull()
+                            ->helperText('Якщо порожньо — на сайті показуються стандартні питання для послуги.'),
                     ])
                     ->columns(2),
             ]);

@@ -4,9 +4,23 @@
     Оформлення замовлення - Екочистка одягу та домашнього текстилю
 @endsection
 
+@section('seo_tags')
+    <meta name="robots" content="{{ config('seo.robots_noindex') }}">
+@endsection
+
+@php
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Послуги та ціни', 'url' => route('services')],
+        ['name' => 'Оформлення замовлення'],
+    ];
+@endphp
+
 @section('content')
     <div class="py-8 md:py-12">
         <div class="container mx-auto px-4 md:px-8">
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0', 'withSchema' => false])
+
             <h1 class="text-3xl md:text-4xl font-bold text-gray-900 mb-8">Оформлення замовлення</h1>
             
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">

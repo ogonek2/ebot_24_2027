@@ -46,13 +46,19 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     
     {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
     <link rel="canonical" href="{{ $pageUrl }}">
     <meta name="author" content="{{ $siteName }}">
 @endsection
 
+@php
+    $breadcrumbs = [breadcrumb_home(), ['name' => 'Локації']];
+@endphp
+
 @section('content')
     <div class="container mx-auto px-4 py-8 lg:py-12">
+        @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0 mb-6 md:mb-8'])
+
         <div class="flex flex-col lg:flex-row gap-6 lg:gap-8">
             {{-- Left Column: Locations List --}}
             <div class="lg:w-1/2 lg:max-w-2xl">

@@ -4,7 +4,17 @@
     {{ $b2b->title }} / B2B - Екочистка одягу та домашнього текстилю
 @endsection
 
+@php
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Для бізнесу', 'url' => route('b2b_page')],
+        ['name' => $b2b->name ?? $b2b->title],
+    ];
+@endphp
+
 @section('content')
+    @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
     {{-- Services Navigation --}}
     @include('includes.elements.header-3-box')
     
@@ -18,13 +28,6 @@
             <div class="grid lg:grid-cols-2 gap-12 items-center flex flex-col-reverse lg:flex-row">
                 {{-- Content --}}
                 <div class="text-white space-y-6 animate-fade-in-left">
-                    {{-- Breadcrumb --}}
-                    <nav class="flex items-center space-x-2 text-sm">
-                        <a href="{{ route('b2b_page') }}" class="hover:text-primary transition-colors">B2B</a>
-                        <span>/</span>
-                        <span class="text-primary">{{ $b2b->name }}</span>
-                    </nav>
-                    
                     {{-- Main Title --}}
                     <h1 class="text-4xl lg:text-5xl font-bold leading-tight">
                         {{ $b2b->title }}

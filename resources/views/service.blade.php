@@ -1,41 +1,69 @@
 @extends('layouts.app')
 
+@php
+    use App\Support\SeoResolver;
+
+    $serviceSlug = $service->transform_url ?? $service->href;
+    $defaultPath = route('service_page', [$primaryCategory->href, $serviceSlug], false);
+    $pageUrl = SeoResolver::canonical($service, $defaultPath);
+    $pageTitle = SeoResolver::title($service, seo_service_title($service->name));
+    $pageDescription = SeoResolver::description($service, seo_service_description($service->name));
+    $keywords = SeoResolver::keywords($service, $service->name . ', хімчистка, Київ, ЄНОТ-24');
+    $robots = SeoResolver::robots($service);
+    $ogTitle = SeoResolver::ogTitle($service, $pageTitle);
+    $ogDescription = SeoResolver::ogDescription($service, $pageDescription);
+    $ogImage = SeoResolver::ogImageUrl($service);
+
+    $originalPrice = floatval($service->price ?? 0);
+    $schemaPrice = $originalPrice;
+    if ($originalPrice > 0 && $primaryCategory && $primaryCategory->hasActiveDiscount()) {
+        $schemaPrice = floatval($primaryCategory->calculateDiscountedPrice($originalPrice));
+    }
+
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Послуги та ціни', 'url' => route('services')],
+    ];
+    if ($primaryCategory) {
+        $breadcrumbs[] = [
+            'name' => $primaryCategory->name,
+            'url' => route('category_page', $primaryCategory->href),
+        ];
+    }
+    $breadcrumbs[] = ['name' => $service->name];
+
+    $hasPrice = $originalPrice > 0;
+    $faqItems = seo_service_faq_items($service, $hasPrice, $schemaPrice);
+@endphp
+
 @section('title')
-    {{ $service->name }} - {{ $service->title ?? 'Послуга хімчистки' }} - Екочистка одягу та домашнього текстилю
+    {{ $pageTitle }}
 @endsection
 
-@section('meta')
-    @if($service->seo_description)
-        <meta name="description" content="{{ $service->seo_description }}">
-    @endif
-    @if($service->seo_keywords)
-        <meta name="keywords" content="{{ $service->seo_keywords }}">
-    @endif
+@section('seo_tags')
+    @include('includes.seo.meta', [
+        'pageTitle' => $pageTitle,
+        'pageDescription' => $pageDescription,
+        'pageUrl' => $pageUrl,
+        'keywords' => $keywords,
+        'robots' => $robots,
+        'ogTitle' => $ogTitle,
+        'ogDescription' => $ogDescription,
+        'ogImage' => $ogImage,
+        'modifiedTime' => optional($service->updated_at)->toAtomString(),
+    ])
+    @include('includes.seo.schema-service', [
+        'serviceName' => $service->name,
+        'servicePrice' => $schemaPrice,
+        'pageUrl' => $pageUrl,
+    ])
+    @include('includes.seo.schema-faq', ['faqItems' => $faqItems])
 @endsection
 
 @section('content')
     <div class="pb-8 md:pb-12">
         <div class="container mx-auto px-4 md:px-6">
-            {{-- Breadcrumbs --}}
-            <div class="mb-6">
-                <nav class="flex items-center space-x-2 text-sm text-gray-600">
-                    <a href="{{ route('welcome') }}" class="hover:text-primary transition-colors duration-300">
-                        Головна
-                    </a>
-                    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                    <a href="{{ route('services') }}" class="hover:text-primary transition-colors duration-300">
-                        Послуги та ціни
-                    </a>
-                    @if($primaryCategory)
-                        <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                        <a href="{{ route('category_page', $primaryCategory->href) }}" class="hover:text-primary transition-colors duration-300">
-                            {{ $primaryCategory->name }}
-                        </a>
-                    @endif
-                    <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
-                    <span class="text-gray-900 font-semibold">{{ $service->name }}</span>
-                </nav>
-            </div>
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0'])
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Main Content --}}
@@ -75,16 +103,8 @@
                         {{-- Prices --}}
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             @php
-                                $originalPrice = floatval($service->price ?? 0);
-                                $hasPrice = $originalPrice > 0;
-                                $discountedPrice = $originalPrice;
-                                $hasDiscount = false;
-                                
-                                // Проверяем скидку на категорию
-                                if ($hasPrice && $primaryCategory && $primaryCategory->hasActiveDiscount()) {
-                                    $discountedPrice = floatval($primaryCategory->calculateDiscountedPrice($originalPrice));
-                                    $hasDiscount = true;
-                                }
+                                $discountedPrice = $schemaPrice;
+                                $hasDiscount = $hasPrice && $primaryCategory && $primaryCategory->hasActiveDiscount();
                             @endphp
                             
                             @if($hasPrice)
@@ -169,6 +189,25 @@
                             <h2 class="text-2xl font-bold text-gray-900 mb-4">Додаткова інформація</h2>
                             <div class="prose prose-lg max-w-none text-gray-700">
                                 {!! nl2br(e($service->value)) !!}
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(count($faqItems) > 0)
+                        <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8 mb-6">
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">Часті запитання</h2>
+                            <div class="space-y-3">
+                                @foreach($faqItems as $faq)
+                                    <details class="group rounded-xl border border-gray-200 bg-gray-50/50 open:bg-white">
+                                        <summary class="cursor-pointer list-none px-4 py-3 font-semibold text-gray-900 flex items-center justify-between gap-2">
+                                            <span>{{ $faq['question'] }}</span>
+                                            <i class="fas fa-chevron-down text-gray-400 text-sm transition-transform group-open:rotate-180"></i>
+                                        </summary>
+                                        <div class="px-4 pb-4 text-gray-700 leading-relaxed">
+                                            {{ $faq['answer'] }}
+                                        </div>
+                                    </details>
+                                @endforeach
                             </div>
                         </div>
                     @endif

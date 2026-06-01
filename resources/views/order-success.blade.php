@@ -4,9 +4,23 @@
     Дякуємо за замовлення - Єнот 24 / Хімчистка одягу та килимів у Києві
 @endsection
 
+@section('seo_tags')
+    <meta name="robots" content="{{ config('seo.robots_noindex') }}">
+@endsection
+
+@php
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Оформлення замовлення', 'url' => route('checkout')],
+        ['name' => 'Дякуємо за замовлення'],
+    ];
+@endphp
+
 @section('content')
     <div class="py-12 md:py-16">
         <div class="container mx-auto px-4 md:px-8 max-w-4xl">
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0', 'withSchema' => false])
+
             {{-- Success Animation --}}
             <div class="text-center mb-8">
                 <div class="relative inline-block mb-6">

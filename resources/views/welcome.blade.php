@@ -4,7 +4,7 @@
     Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві
 @endsection
 @section('seo_tags')
-    <meta property="Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві">
+    <meta name="description" content="Замовити послугу прання/хімчистки килимів та одягу в компанії ЄНОТ-24. Краща якість хімчистки. Безпечна хімія. Кур'єрська доставка по Києву.">
 
     <meta property="og:description"
         content="Замовити послугу прання/хімчистки килимів та одягу Ви можете в компанії Єнот-24. Краща якість хімчистки. Безпечна хімія. Найкоротші терміни. Замовляйте просто зараз!">
@@ -23,12 +23,12 @@
     <meta name="DC.subject" content="Прання, хімчистка, Київ, Єнот-24, чистка килимів, одяг">
     
     <!-- Оптимізація для пошукових систем -->
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://enot-24.com.ua/">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
+    <link rel="canonical" href="{{ seo_canonical('/') }}">
     <meta property="og:type" content="website">
     <meta property="og:title" content="Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві">
     <meta property="og:description" content="Якісні послуги прання та хімчистки в Києві. Звертайтеся до Єнот-24 для чистоти, яку ви заслуговуєте!">
-    <meta property="og:url" content="https://enot-24.com.ua/">
+    <meta property="og:url" content="{{ seo_canonical('/') }}">
     
     <!-- Додаткові метатеги для SEO -->
     <meta name="city" content="Київ">
@@ -54,10 +54,10 @@
     <!-- Додаткові метатеги для пошукової оптимізації -->
     <meta property="og:locale" content="uk_UA">
     <meta property="og:site_name" content="Єнот-24">
-    <meta name="twitter:card" content="summary">
+    <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві">
     <meta name="twitter:description" content="Професійне прання та хімчистка килимів і одягу в Києві. Чистота, якість та вигідні ціни від Єнот-24!">
-    <meta name="twitter:url" content="https://enot-24.com.ua/">
+    <meta name="twitter:url" content="{{ seo_canonical('/') }}">
     
     <!-- Локалізаційні теги для Google My Business -->
     <meta itemprop="name" content="Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві">
@@ -73,23 +73,22 @@
     <meta name="target" content="all">
     <meta name="audience" content="Кияни, люди, зацікавлені у чистоті та догляді за одягом і килимами">
     
-    <!-- Структуровані дані Schema.org для покращення індексації (JSON-LD формат) -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
-      "@type": "LocalBusiness",
-      "name": "Єнот-24 - Прання/Хімчистка Килимів та Одягу в Києві",
-      "image": "{{ asset('storage/src/logo/logo-enot24.png') }}",
+      "@type": "CleaningService",
+      "name": "ЄНОТ-24",
+      "url": "{{ seo_site_url() }}",
+      "telephone": "{{ config('seo.telephone') }}",
+      "image": "{{ seo_og_image() }}",
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Київ",
         "addressCountry": "UA"
       },
-      "url": "https://enot-24.com.ua",
-      "telephone": "+38 (067) 887-2233",
-      "priceRange": "₴₴",
-      "description": "Професійні послуги прання та хімчистки килимів і одягу в Києві від Єнот-24.",
-      "areaServed": "Київ, Україна"
+      "openingHours": "Mo-Su 09:00-21:00",
+      "priceRange": "$$",
+      "description": "Професійні послуги прання та хімчистки одягу в Києві від ЄНОТ-24."
     }
     </script>
 @endsection

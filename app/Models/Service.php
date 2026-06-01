@@ -11,7 +11,12 @@ class Service extends Model
 
     protected $fillable = [
         'name', 'article', 'price', 'individual_price', 'category_id', 'marker', 'title', 'value', 'href', 'transform_url',
-        'seo_description', 'seo_keywords', 'description', 'type_page', 'promotion', 'created_at', 'updated_at', 'sort_order'
+        'seo_description', 'seo_keywords', 'meta_title', 'og_title', 'og_description', 'og_image', 'robots', 'canonical_path',
+        'faq', 'description', 'type_page', 'promotion', 'created_at', 'updated_at', 'sort_order',
+    ];
+
+    protected $casts = [
+        'faq' => 'array',
     ];
 
     public function categories()

@@ -4,9 +4,15 @@
     Акції - Єнот 24 / Знижка на послуги з хімчистки. Актуальні акції
 @endsection
 
+@php
+    $breadcrumbs = [breadcrumb_home(), ['name' => 'Акції']];
+@endphp
+
 @section('content')
     <div class="pb-8 md:pb-12">
         <div class="container mx-auto px-4 md:px-6">
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0'])
+
             {{-- Promotions Block Component --}}
             @if($promotions->count() > 0)
                 <div id="promotions-block-app" data-promotions="{{ json_encode($promotions->map(function($discount) {

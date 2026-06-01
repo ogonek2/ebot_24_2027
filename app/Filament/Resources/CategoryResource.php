@@ -99,6 +99,20 @@ class CategoryResource extends Resource
                             ->helperText('Від 0 до 100 відсотків'),
                     ])
                     ->columns(2),
+
+                Forms\Components\Section::make('SEO')
+                    ->schema([
+                        Forms\Components\TextInput::make('meta_title')->label('Meta title')->maxLength(70),
+                        Forms\Components\Textarea::make('meta_description')->label('Meta description')->rows(3)->maxLength(500),
+                        Forms\Components\TextInput::make('meta_keywords')->label('Meta keywords')->maxLength(255),
+                        Forms\Components\TextInput::make('og_title')->label('OG title')->maxLength(70),
+                        Forms\Components\Textarea::make('og_description')->label('OG description')->rows(2),
+                        Forms\Components\FileUpload::make('og_image')->label('OG image')->image()->directory('src/seo/categories')->disk('public'),
+                        Forms\Components\TextInput::make('robots')->label('Robots')->placeholder('index, follow'),
+                        Forms\Components\TextInput::make('canonical_path')->label('Canonical path')->placeholder('/poslugi/kategoriya'),
+                    ])
+                    ->columns(2)
+                    ->collapsed(),
             ]);
     }
 

@@ -45,12 +45,18 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     
     {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
     <link rel="canonical" href="{{ $pageUrl }}">
     <meta name="author" content="{{ $siteName }}">
 @endsection
 
+@php
+    $breadcrumbs = [breadcrumb_home(), ['name' => 'Для бізнесу']];
+@endphp
+
 @section('content')
+    @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
     {{-- Hero Section --}}
     <div class="container mx-auto px-4 my-20">
         <div class="grid lg:grid-cols-2 gap-12 items-center flex flex-col-reverse lg:flex-row">

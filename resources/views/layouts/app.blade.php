@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 
 <head>
     <meta charset="UTF-8">
@@ -27,7 +27,15 @@
     {{-- For style --}}
     @yield('styles')
     {{-- Seo --}}
-    @yield('seo_tags')
+    @hasSection('seo_tags')
+        @yield('seo_tags')
+    @else
+        @include('includes.seo.meta', [
+            'pageTitle' => trim($__env->yieldContent('title')),
+            'pageDescription' => config('seo.default_description'),
+            'pageUrl' => seo_canonical(),
+        ])
+    @endif
 
     <style>
         body{
@@ -42,6 +50,21 @@
             font-size: 1rem;
             line-height: 1.7;
             color: #111827;
+        }
+
+        .enot-breadcrumbs {
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: thin;
+            scrollbar-color: #cbd5e1 transparent;
+        }
+
+        .enot-breadcrumbs::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .enot-breadcrumbs::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
         }
 
         .rich-text-content p {
@@ -176,8 +199,7 @@
             font-size: 0.875rem;
         }
 
-        .rich-text-content table,
-        .blog-article-body .blog-content-table {
+        .rich-text-content table {
             width: 100%;
             border-collapse: collapse;
             margin: 1rem 0;
@@ -185,9 +207,7 @@
         }
 
         .rich-text-content th,
-        .rich-text-content td,
-        .blog-article-body .blog-content-table th,
-        .blog-article-body .blog-content-table td {
+        .rich-text-content td {
             border: 1px solid #e5e7eb;
             padding: 0.5rem 0.75rem;
             text-align: left;
@@ -585,7 +605,8 @@
 </head>
 
 <body>
-    {{-- Page Loader --}}
+    @if(request()->routeIs('welcome') && config('seo.show_page_loader', true))
+    {{-- Page Loader (тільки головна; не блокує LCP на послугах і блозі) --}}
     <div id="page-loader">
         {{-- Wave Effect at Bottom --}}
         <div class="loader-wave"></div>
@@ -622,6 +643,7 @@
             </div>
         </div>
     </div>
+    @endif
     
     {{-- First element --}}
     <div id="app">
@@ -1311,244 +1333,7 @@
     <!-- Модальное окно для акций -->
     @include('includes.elements.promotion-modal')
     @include('includes.elements.scheduled-popup-modals')
-    
-    {{-- Page Loader Script --}}
-    <script>
-        (function() {
-            const loader = document.getElementById('page-loader');
-            const body = document.body;
-            let hideLoaderCalled = false;
-            let pageLoaded = false;
-            let minTimeElapsed = false;
-            const startTime = Date.now();
-            
-            // Check if loader was already shown (using sessionStorage for browser session)
-            const loaderShown = sessionStorage.getItem('enot_loader_shown');
-            
-            // If loader was already shown in this session, hide it immediately
-            if (loaderShown === 'true') {
-                if (loader) {
-                    loader.style.display = 'none';
-                    loader.classList.add('hidden');
-                }
-                body.classList.remove('loading');
-                return; // Exit early, don't show loader
-            }
-            
-            // Mark that loader was shown
-            sessionStorage.setItem('enot_loader_shown', 'true');
-            
-            // Add loading class to body
-            body.classList.add('loading');
-            
-            // Minimum display time - enough to show logo appear and start of brand reveal (1.2 seconds)
-            // This ensures users see at least the beginning of the animation
-            const MIN_DISPLAY_TIME = 1200; // 1.2 seconds
-            
-            // Mark minimum time as elapsed
-            setTimeout(() => {
-                minTimeElapsed = true;
-                if (pageLoaded && !hideLoaderCalled) {
-                    hideLoader();
-                }
-            }, MIN_DISPLAY_TIME);
-            
-            // Hide loader function with logo transition
-            function hideLoader() {
-                if (hideLoaderCalled || !loader) return;
-                hideLoaderCalled = true;
-                
-                const loaderContent = document.querySelector('.loader-content');
-                const navbarLogo = document.querySelector('#navbar img');
-                const navbarLogoContainer = navbarLogo ? navbarLogo.closest('a') : null;
-                
-                if (loaderContent && navbarLogo && navbarLogoContainer) {
-                    // Get positions and dimensions
-                    const loaderContentRect = loaderContent.getBoundingClientRect();
-                    const navbarLogoRect = navbarLogoContainer.getBoundingClientRect();
-                    
-                    // Calculate center points
-                    const startX = loaderContentRect.left + loaderContentRect.width / 2;
-                    const startY = loaderContentRect.top + loaderContentRect.height / 2;
-                    const endX = navbarLogoRect.left + navbarLogoRect.width / 2;
-                    const endY = navbarLogoRect.top + navbarLogoRect.height / 2;
-                    
-                    // Calculate scale factor
-                    const startWidth = loaderContentRect.width;
-                    const endWidth = navbarLogoRect.width;
-                    const scale = endWidth / startWidth;
-                    
-                    // Calculate translation needed (in pixels)
-                    const translateX = endX - startX;
-                    const translateY = endY - startY;
-                    
-                    // Create transition element (clone of entire loader content)
-                    const transitionElement = loaderContent.cloneNode(true);
-                    transitionElement.classList.add('logo-transition');
-                    
-                    // Get computed styles to preserve appearance
-                    const computedStyle = window.getComputedStyle(loaderContent);
-                    transitionElement.style.position = 'fixed';
-                    transitionElement.style.left = startX + 'px';
-                    transitionElement.style.top = startY + 'px';
-                    transitionElement.style.transform = 'translate(-50%, -50%) scale(1)';
-                    transitionElement.style.opacity = '1';
-                    transitionElement.style.zIndex = '10000';
-                    transitionElement.style.width = startWidth + 'px';
-                    transitionElement.style.display = 'flex';
-                    transitionElement.style.alignItems = 'center';
-                    transitionElement.style.justifyContent = 'center';
-                    transitionElement.style.gap = computedStyle.gap || '20px';
-                    
-                    // Hide original loader content smoothly
-                    loaderContent.style.opacity = '0';
-                    loaderContent.style.transition = 'opacity 0.2s ease-out';
-                    
-                    // Hide navbar logo temporarily
-                    navbarLogo.style.opacity = '0';
-                    
-                    // Add to body
-                    document.body.appendChild(transitionElement);
-                    
-                    // Force reflow to ensure initial state is rendered
-                    void transitionElement.offsetHeight;
-                    
-                    // Small delay to ensure smooth start
-                    requestAnimationFrame(() => {
-                        requestAnimationFrame(() => {
-                            // Start smooth animation - move and scale
-                            transitionElement.style.transform = `translate(calc(-50% + ${translateX}px), calc(-50% + ${translateY}px)) scale(${scale})`;
-                            transitionElement.style.opacity = '1';
-                        });
-                    });
-                    
-                    // Hide loader background with delay
-                    setTimeout(() => {
-                        loader.classList.add('hidden');
-                    }, 400);
-                    
-                    // Start fading in navbar logo BEFORE transition element disappears (overlap)
-                    // This creates a smooth crossfade effect
-                    setTimeout(() => {
-                        // Begin showing navbar logo while transition element is still visible
-                        navbarLogo.style.opacity = '0';
-                        navbarLogo.style.transition = 'opacity 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                        
-                        // Force reflow
-                        void navbarLogo.offsetHeight;
-                        
-                        // Start fade-in of navbar logo
-                        requestAnimationFrame(() => {
-                            navbarLogo.style.opacity = '1';
-                        });
-                    }, 800);
-                    
-                    // Start fading out transition element to create smooth crossfade
-                    setTimeout(() => {
-                        transitionElement.style.opacity = '0';
-                        transitionElement.style.transition = 'opacity 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-                    }, 900);
-                    
-                    // After animation completes - remove transition element
-                    setTimeout(() => {
-                        // Remove transition element
-                        if (transitionElement.parentNode) {
-                            transitionElement.remove();
-                        }
-                        
-                        // Ensure navbar logo is visible
-                        navbarLogo.style.opacity = '1';
-                        
-                        // Remove loading class
-                        body.classList.remove('loading');
-                        body.classList.add('loader-complete');
-                        
-                        // Hide loader completely
-                        if (loader.parentNode) {
-                            loader.style.display = 'none';
-                        }
-                        
-                        // Mark loader as shown in sessionStorage (already set at start, but ensure it's set)
-                        sessionStorage.setItem('enot_loader_shown', 'true');
-                        
-                        // Remove loader-complete class after a moment
-                        setTimeout(() => {
-                            body.classList.remove('loader-complete');
-                            // Reset navbar logo transition for future use
-                            navbarLogo.style.transition = '';
-                        }, 1500);
-                    }, 1400);
-                } else {
-                    // Fallback if elements not found
-                    loader.classList.add('hidden');
-                    setTimeout(() => {
-                        body.classList.remove('loading');
-                        if (loader.parentNode) {
-                            loader.style.display = 'none';
-                        }
-                        // Mark loader as shown in sessionStorage
-                        sessionStorage.setItem('enot_loader_shown', 'true');
-                    }, 600);
-                }
-            }
-            
-            // Check if page is loaded
-            function checkPageLoad() {
-                if (document.readyState === 'complete') {
-                    pageLoaded = true;
-                    // Hide as soon as minimum time has elapsed
-                    if (minTimeElapsed && !hideLoaderCalled) {
-                        hideLoader();
-                    }
-                }
-            }
-            
-            // Wait for page to fully load
-            if (document.readyState === 'complete') {
-                pageLoaded = true;
-                // Hide as soon as minimum time has elapsed
-                if (minTimeElapsed && !hideLoaderCalled) {
-                    hideLoader();
-                }
-            } else {
-                // Wait for DOMContentLoaded
-                if (document.readyState === 'loading') {
-                    document.addEventListener('DOMContentLoaded', checkPageLoad);
-                }
-                
-                // Wait for window load (images, stylesheets, etc.)
-                window.addEventListener('load', function() {
-                    pageLoaded = true;
-                    // Hide as soon as minimum time has elapsed
-                    if (minTimeElapsed && !hideLoaderCalled) {
-                        hideLoader();
-                    }
-                });
-                
-                // Fallback: hide after maximum time (4 seconds) even if page not fully loaded
-                setTimeout(function() {
-                    if (!hideLoaderCalled) {
-                        hideLoader();
-                    }
-                }, 4000);
-            }
-            
-            // Ensure logo is loaded (critical for animation)
-            const loaderLogo = document.querySelector('.loader-logo');
-            if (loaderLogo) {
-                if (loaderLogo.complete) {
-                    // Logo already loaded, animations will start
-                } else {
-                    loaderLogo.addEventListener('load', function() {
-                        // Logo loaded, animations will start
-                    });
-                    loaderLogo.addEventListener('error', function() {
-                        // Logo failed to load, continue anyway
-                    });
-                }
-            }
-        })();
-    </script>
+    @include('includes.page-loader-script')
 
     {{-- Floating Phone Button --}}
     <button 

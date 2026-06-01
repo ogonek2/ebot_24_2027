@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\BlogPost;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 class BlogController extends Controller
@@ -12,7 +13,7 @@ class BlogController extends Controller
         $posts = BlogPost::query()
             ->published()
             ->orderByDesc('published_at')
-            ->paginate(12);
+            ->paginate(16);
 
         return view('blog', ['posts' => $posts]);
     }
@@ -24,16 +25,25 @@ class BlogController extends Controller
             ->published()
             ->firstOrFail();
 
-        $related = BlogPost::query()
-            ->published()
-            ->where('id', '!=', $post->id)
-            ->orderByDesc('published_at')
-            ->limit(3)
-            ->get();
-
         return view('blog-post', [
             'post' => $post,
-            'relatedPosts' => $related,
+            'relatedPosts' => $post->relatedPostsByRelevance(6),
+            'relatedServices' => $post->relatedServices(),
+        ]);
+    }
+
+    public function feed(): Response
+    {
+        $posts = BlogPost::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(50)
+            ->get();
+
+        $xml = view('feeds.blog', ['posts' => $posts])->render();
+
+        return response($xml, 200, [
+            'Content-Type' => 'application/rss+xml; charset=UTF-8',
         ]);
     }
 }

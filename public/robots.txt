@@ -1,3 +1,12 @@
 User-agent: *
-Disallow:
+Disallow: /oformlennya-zamovlennya
+Disallow: /order-success
+Disallow: /api/
+Disallow: /home
+Disallow: /login
+Disallow: /register
+Disallow: /password/
+Disallow: /admin
+Disallow: /test-telegram
+
 Sitemap: https://enot-24.com.ua/sitemap.xml

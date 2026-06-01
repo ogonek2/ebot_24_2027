@@ -10,7 +10,8 @@ class Category extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'href', 'discount_percent', 'discount_active', 'category_type', 'category_img', 'sort_order', 'parent_id'
+        'name', 'href', 'discount_percent', 'discount_active', 'category_type', 'category_img', 'sort_order', 'parent_id',
+        'meta_title', 'meta_description', 'meta_keywords', 'og_title', 'og_description', 'og_image', 'robots', 'canonical_path',
     ];
 
     protected $casts = [
@@ -20,6 +21,11 @@ class Category extends Model
     public function services()
     {
         return $this->belongsToMany(Service::class);
+    }
+
+    public function blogPosts()
+    {
+        return $this->belongsToMany(BlogPost::class, 'blog_post_category');
     }
 
     /**

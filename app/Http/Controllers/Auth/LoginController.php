@@ -43,7 +43,7 @@ class LoginController extends Controller
     protected function authenticated($request, $user): RedirectResponse
     {
         if ($user->role === User::ROLE_COPYWRITER) {
-            return redirect()->route('blog-dashboard.posts.index');
+            return redirect()->route('copywriter.posts.index');
         }
 
         return redirect()->intended($this->redirectPath());

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SEO-аудит: виконані роботи — ЄНОТ-24</title>
+    <style>
+        :root {
+            --primary: #7470BF;
+            --accent: #E75A84;
+            --bg: #F3F2FF;
+            --card: #ffffff;
+            --text: #1f2937;
+            --muted: #6b7280;
+            --ok: #059669;
+            --warn: #d97706;
+            --border: #e5e7eb;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "Segoe UI", system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text);
+            background: var(--bg);
+        }
+        .wrap { max-width: 960px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+        header {
+            background: linear-gradient(135deg, var(--primary), #5b57a8);
+            color: #fff;
+            padding: 2.5rem 2rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 30px rgba(116, 112, 191, 0.25);
+        }
+        header h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+        header p { margin: 0; opacity: 0.92; font-size: 0.95rem; }
+        .meta { margin-top: 1rem; font-size: 0.85rem; opacity: 0.85; }
+        section {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 0.75rem;
+            padding: 1.5rem 1.75rem;
+            margin-bottom: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        h2 {
+            margin: 0 0 1rem;
+            font-size: 1.25rem;
+            color: var(--primary);
+            border-bottom: 2px solid rgba(116, 112, 191, 0.15);
+            padding-bottom: 0.5rem;
+        }
+        h3 { margin: 1.25rem 0 0.5rem; font-size: 1.05rem; color: #374151; }
+        ul { margin: 0.5rem 0; padding-left: 1.35rem; }
+        li { margin-bottom: 0.35rem; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            margin: 0.75rem 0;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 0.6rem 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        th { background: #f9f8ff; font-weight: 600; }
+        code {
+            background: #f3f2ff;
+            color: #5b21b6;
+            padding: 0.1em 0.35em;
+            border-radius: 0.25rem;
+            font-size: 0.88em;
+        }
+        .badge {
+            display: inline-block;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            padding: 0.2em 0.5em;
+            border-radius: 0.35rem;
+            margin-right: 0.35rem;
+        }
+        .badge-done { background: #d1fae5; color: var(--ok); }
+        .badge-new { background: #ede9fe; color: var(--primary); }
+        .badge-fix { background: #fef3c7; color: var(--warn); }
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .stat {
+            background: rgba(255,255,255,0.15);
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            text-align: center;
+        }
+        .stat strong { display: block; font-size: 1.5rem; }
+        .note {
+            background: #fffbeb;
+            border-left: 4px solid var(--warn);
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        .ok-box {
+            background: #ecfdf5;
+            border-left: 4px solid var(--ok);
+            padding: 0.75rem 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        footer {
+            text-align: center;
+            color: var(--muted);
+            font-size: 0.85rem;
+            margin-top: 2rem;
+        }
+        a { color: var(--primary); }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <h1>SEO-аудит: звіт про виконані роботи</h1>
+        <p>Проєкт <strong>ЄНОТ-24</strong> (enot-24.com.ua) — хімчистка та прання в Києві</p>
+        <p class="meta">Дата звіту: 1 червня 2026 · Версія кодової бази: git (локальна розробка)</p>
+        <div class="summary-grid">
+            <div class="stat"><strong>15+</strong> критичних SEO-задач</div>
+            <div class="stat"><strong>4</strong> sitemap-файли</div>
+            <div class="stat"><strong>3</strong> типи контенту з SEO-полями</div>
+            <div class="stat"><strong>1</strong> панель копірайтера</div>
+        </div>
+    </header>
+
+    <section>
+        <h2>1. Резюме</h2>
+        <p>У рамках доопрацювання сайту виконано комплекс заходів з технічного SEO, індексації, структурованих даних, блогу та зручності керування контентом для копірайтера. Основна мета — усунути «сліпі зони» індексації (сотні сторінок послуг без meta), уніфікувати canonical/OG-теги та дати пошуковим системам чітку карту сайту.</p>
+        <div class="ok-box">
+            <strong>Головний результат:</strong> сторінки послуг, категорій, блогу та статей тепер мають керовані meta-теги, canonical, Open Graph, robots і (де потрібно) Schema.org. Додано sitemap-індекс, RSS блогу та панель копірайтера з SEO-налаштуваннями.
+        </div>
+    </section>
+
+    <section>
+        <h2>2. Критичні виправлення індексації</h2>
+        <table>
+            <thead>
+                <tr><th>Проблема</th><th>Рішення</th><th>Статус</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Сторінки послуг (<code>service.blade.php</code>) виводили meta в секції <code>@section('meta')</code>, тоді як layout очікує <code>@yield('seo_tags')</code> — фактично <strong>без description і canonical</strong> на сотнях URL</td>
+                    <td>Перенесено SEO у <code>@section('seo_tags')</code>, підключено <code>includes.seo.meta</code> та Schema</td>
+                    <td><span class="badge badge-fix">Виправлено</span></td>
+                </tr>
+                <tr>
+                    <td>Відсутність єдиного canonical-домену на проді</td>
+                    <td><code>config/seo.php</code>, <code>SEO_SITE_URL</code> в <code>.env</code>, хелпер <code>seo_canonical()</code></td>
+                    <td><span class="badge badge-done">Готово</span></td>
+                </tr>
+                <tr>
+                    <td>Неповна карта сайту для Google</td>
+                    <td>Sitemap index + окремі XML: pages, categories, services, posts</td>
+                    <td><span class="badge badge-done">Готово</span></td>
+                </tr>
+                <tr>
+                    <td>Службові сторінки в індексі</td>
+                    <td><code>public/robots.txt</code> — disallow checkout, API, admin, login тощо</td>
+                    <td><span class="badge badge-done">Готово</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>3. Технічна SEO-інфраструктура</h2>
+        <h3>3.1. Конфігурація та хелпери</h3>
+        <ul>
+            <li><code>config/seo.php</code> — site URL, назва, default description, OG image, robots, page loader</li>
+            <li><code>app/helpers.php</code> — <code>seo_canonical</code>, <code>seo_truncate</code>, <code>seo_service_title/description</code>, <code>seo_og_image</code>, <code>seo_paginator_url</code>, <code>breadcrumb_*</code>, <code>seo_service_faq_items</code>, <code>blog_post_content_html</code></li>
+            <li><code>app/Support/SeoResolver.php</code> — єдина логіка title, description, keywords, OG, robots, canonical з fallback-шаблонами</li>
+            <li><code>resources/views/includes/seo/head.blade.php</code> — meta description, robots, canonical, OG, Twitter Card</li>
+            <li><code>resources/views/includes/seo/meta.blade.php</code> — обгортка для підключення head</li>
+        </ul>
+
+        <h3>3.2. Layout та мова</h3>
+        <ul>
+            <li><code>layouts/app.blade.php</code> — <code>lang="uk"</code>, fallback SEO через <code>includes.seo.meta</code>, якщо сторінка не задала <code>seo_tags</code></li>
+            <li>Спрощений page loader (лише головна, керується <code>SHOW_PAGE_LOADER</code>)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>4. Sitemap та RSS</h2>
+        <table>
+            <thead>
+                <tr><th>URL / маршрут</th><th>Зміст</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>/sitemap.xml</code></td><td>Індекс sitemap (pages, categories, services, posts)</td></tr>
+                <tr><td><code>/sitemap-pages.xml</code></td><td>Головна, послуги, блог, акції, контакти, доставка, B2B, оферта, політика тощо</td></tr>
+                <tr><td><code>/sitemap-categories.xml</code></td><td>Категорії з послугами</td></tr>
+                <tr><td><code>/sitemap-services.xml</code></td><td>Усі комерційні сторінки послуг</td></tr>
+                <tr><td><code>/sitemap-posts.xml</code></td><td>Опубліковані статті блогу</td></tr>
+                <tr><td><code>/blog/feed.xml</code></td><td>RSS-стрічка блогу (до 50 останніх постів)</td></tr>
+            </tbody>
+        </table>
+        <p>Контролер: <code>app/Http/Controllers/SitemapController.php</code> (кешування, lastmod з БД).</p>
+    </section>
+
+    <section>
+        <h2>5. Schema.org (структуровані дані)</h2>
+        <ul>
+            <li><code>includes/seo/schema-service.blade.php</code> — Service / Offer на сторінках послуг</li>
+            <li><code>includes/seo/schema-faq.blade.php</code> — FAQPage (кастомний FAQ у послуг або шаблонний)</li>
+            <li><code>includes/seo/schema-breadcrumbs.blade.php</code> — BreadcrumbList</li>
+            <li><code>includes/elements/breadcrumbs.blade.php</code> — візуальні крихти + microdata на публічних сторінках</li>
+            <li>Статті блогу — JSON-LD <code>Article</code> у <code>blog-post.blade.php</code></li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>6. Сторінки послуг і категорій</h2>
+        <h3>6.1. Послуги (<code>service.blade.php</code>)</h3>
+        <ul>
+            <li>Динамічні title, description, keywords через <code>SeoResolver</code></li>
+            <li>Canonical, OG, Twitter, robots</li>
+            <li>FAQ-блок у контенті + Schema FAQ</li>
+            <li>Міграція <code>faq</code> (JSON) у таблиці <code>services</code></li>
+        </ul>
+
+        <h3>6.2. Категорії (<code>category.blade.php</code>)</h3>
+        <ul>
+            <li>SEO з полів категорії або автогенерація з назви та кількості послуг</li>
+            <li>OG-зображення: окреме <code>og_image</code> або іконка категорії</li>
+        </ul>
+
+        <h3>6.3. Розширені SEO-поля в БД (міграція 2026_06_03)</h3>
+        <table>
+            <thead>
+                <tr><th>Сутність</th><th>Поля</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>categories</strong></td>
+                    <td>meta_title, meta_description, meta_keywords, og_title, og_description, og_image, robots, canonical_path</td>
+                </tr>
+                <tr>
+                    <td><strong>services</strong></td>
+                    <td>seo_description, seo_keywords, meta_title, og_*, robots, canonical_path</td>
+                </tr>
+                <tr>
+                    <td><strong>blog_posts</strong></td>
+                    <td>meta_title, meta_description, meta_keywords, og_*, robots, canonical_path</td>
+                </tr>
+                <tr>
+                    <td><strong>seo_pages</strong></td>
+                    <td>Налаштування сторінки списку блогу (<code>blog.index</code>)</td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+    <section>
+        <h2>7. Блог — контент і UX</h2>
+        <ul>
+            <li><span class="badge badge-new">Новий</span> Дизайн списку статей: сітка карток, hero-блок, RSS</li>
+            <li><span class="badge badge-new">Новий</span> Сторінка статті: сайдбар (релевантні послуги + статті), типографіка контенту</li>
+            <li><span class="badge badge-new">Новий</span> Зв’язок статей із послугами (<code>related_service_ids</code>)</li>
+            <li><span class="badge badge-new">Новий</span> Категорії блогу через pivot <code>blog_post_category</code> (таблиця <code>categories</code> спільна з послугами)</li>
+            <li><span class="badge badge-new">Новий</span> Кастомна пагінація (<code>pagination/blog.blade.php</code>) з prev/next для SEO</li>
+            <li><span class="badge badge-new">Новий</span> Canonical пагінації, <code>rel="prev/next"</code> на списку блогу</li>
+            <li><span class="badge badge-new">Новий</span> Таблиці в статтях: обгортка з горизонтальним скролом (<code>blog_post_content_html</code>), без роздування сторінки</li>
+            <li>16 статей на сторінку списку</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>8. Панель копірайтера</h2>
+        <p>URL: <code>/dashboard/copywriter</code> (роль <code>copywriter</code> або <code>admin</code>).</p>
+        <table>
+            <thead>
+                <tr><th>Розділ</th><th>Можливості</th></tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Блог</strong></td>
+                    <td>CRUD статей, редактор, featured image, публікація/чернетка, SEO-поля, категорії, релевантні послуги</td>
+                </tr>
+                <tr>
+                    <td><strong>Категорії</strong></td>
+                    <td>CRUD категорій (ієрархія, slug, іконка, знижки, повний блок SEO)</td>
+                </tr>
+                <tr>
+                    <td><strong>Контент послуг</strong></td>
+                    <td>Редагування опису, SEO, FAQ; <strong>ціни лише для перегляду</strong> (заблоковані)</td>
+                </tr>
+                <tr>
+                    <td><strong>SEO списку блогу</strong></td>
+                    <td>Meta / OG / robots для головної сторінки <code>/blog</code></td>
+                </tr>
+            </tbody>
+        </table>
+        <p>Маршрути: <code>routes/copywriter_dashboard.php</code>. Редіректи зі старого <code>/dashboard/blog</code>.</p>
+    </section>
+
+    <section>
+        <h2>9. Filament (адмін-панель)</h2>
+        <ul>
+            <li>Розділи SEO у <code>CategoryResource</code> та <code>ServiceResource</code></li>
+            <li>Repeater FAQ для послуг</li>
+            <li>Ролі користувачів: admin / copywriter (<code>UserRolesSeeder</code>)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>10. Інші публічні сторінки</h2>
+        <p>Підключено breadcrumbs та/або SEO meta на: головна, послуги (<code>poslugi</code>), контакти, доставка, локації, B2B, акції, checkout (noindex за потреби), order-success тощо.</p>
+    </section>
+
+    <section>
+        <h2>11. Налаштування на продакшені (.env)</h2>
+        <table>
+            <thead>
+                <tr><th>Змінна</th><th>Призначення</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>SEO_SITE_URL=https://enot-24.com.ua</code></td><td>Canonical та OG URL</td></tr>
+                <tr><td><code>APP_URL</code></td><td>Базовий URL застосунку</td></tr>
+                <tr><td><code>SHOW_PAGE_LOADER=false</code></td><td>Вимкнути loader на всіх сторінках (опційно)</td></tr>
+            </tbody>
+        </table>
+        <div class="note">
+            <strong>Після деплою:</strong> виконати <code>php artisan migrate</code>, перевірити <a href="https://enot-24.com.ua/sitemap.xml">sitemap.xml</a> у Search Console, надіслати sitemap на індексацію, перевірити довільні сторінки послуг у «Перегляді URL».
+        </div>
+    </section>
+
+    <section>
+        <h2>12. Рекомендації на наступний етап</h2>
+        <ul>
+            <li>Заповнити SEO-поля для топ-50 послуг і категорій через панель копірайтера</li>
+            <li>Прив’язати категорії до статей блогу для кращої внутрішньої перелінковки</li>
+            <li>Моніторинг GSC: покриття, помилки canonical, Core Web Vitals</li>
+            <li>Додати фільтр блогу за категорією на публічному сайті (за потреби)</li>
+            <li>Регулярно оновлювати <code>lastmod</code> у контенті при суттєвих правках</li>
+            <li>Перевірити hreflang, якщо з’явиться російська версія сайту</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>13. Ключові файли (довідник)</h2>
+        <table>
+            <thead>
+                <tr><th>Шлях</th><th>Призначення</th></tr>
+            </thead>
+            <tbody>
+                <tr><td><code>config/seo.php</code></td><td>Глобальні SEO-налаштування</td></tr>
+                <tr><td><code>app/helpers.php</code></td><td>SEO-хелпери</td></tr>
+                <tr><td><code>app/Support/SeoResolver.php</code></td><td>Резолвер meta/OG для сутностей</td></tr>
+                <tr><td><code>app/Http/Controllers/SitemapController.php</code></td><td>XML sitemap</td></tr>
+                <tr><td><code>public/robots.txt</code></td><td>Robots</td></tr>
+                <tr><td><code>resources/views/includes/seo/</code></td><td>Meta, Schema, head</td></tr>
+                <tr><td><code>resources/views/service.blade.php</code></td><td>Сторінка послуги</td></tr>
+                <tr><td><code>resources/views/category.blade.php</code></td><td>Сторінка категорії</td></tr>
+                <tr><td><code>resources/views/blog.blade.php</code></td><td>Список блогу</td></tr>
+                <tr><td><code>resources/views/blog-post.blade.php</code></td><td>Стаття блогу</td></tr>
+                <tr><td><code>routes/copywriter_dashboard.php</code></td><td>Панель копірайтера</td></tr>
+                <tr><td><code>database/migrations/2026_06_03_*</code></td><td>Розширені SEO-поля</td></tr>
+            </tbody>
+        </table>
+    </section>
+
+    <footer>
+        Звіт згенеровано за станом репозиторію ЄНОТ-24 · Для внутрішнього використання командою розробки та маркетингу
+    </footer>
+</div>
+</body>
+</html>

@@ -42,12 +42,18 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     
     {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
     <link rel="canonical" href="{{ $pageUrl }}">
     <meta name="author" content="{{ $siteName }}">
 @endsection
 
+@php
+    $breadcrumbs = [breadcrumb_home(), ['name' => 'Доставка']];
+@endphp
+
 @section('content')
+    @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
     {{-- Hero Section --}}
     <div class="container mx-auto px-4 mb-20">
         <div class="flex flex-col-reverse lg:flex-row gap-12 items-center">

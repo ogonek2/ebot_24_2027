@@ -46,14 +46,20 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     
     {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
     <link rel="canonical" href="{{ $pageUrl }}">
     <meta name="author" content="{{ $siteName }}">
 @endsection
 
+@php
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Послуги та ціни'],
+    ];
+@endphp
+
 @section('content')
-    {{-- Promotions Banner --}}
-    {{-- @include('includes.elements.promotions-banner') --}}
+    @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
 
     {{-- Price Section --}}
     @include('includes.elements.price-box')

@@ -20,6 +20,8 @@ use App\Http\Controllers\SitemapController;
 Route::get('/', [IndexServices::class, 'index'])->name('welcome');
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('sitemap.index');
 Route::get('/sitemap-pages.xml', [SitemapController::class, 'pages'])->name('sitemap.pages');
+Route::get('/sitemap-categories.xml', [SitemapController::class, 'categories'])->name('sitemap.categories');
+Route::get('/sitemap-services.xml', [SitemapController::class, 'services'])->name('sitemap.services');
 Route::get('/sitemap-posts.xml', [SitemapController::class, 'posts'])->name('sitemap.posts');
 Route::get('/poslugi-ta-cini', [IndexServices::class, 'services'])->name('services');
 Route::get('/poslugi-ta-cini/{category}/posluga/{service}', [IndexServices::class, 'service_page'])->name('service_page');
@@ -35,6 +37,7 @@ Route::get('/lokatsii/{seo_link}', [IndexServices::class, 'location'])->where('s
 Route::get('/aktsii', [IndexServices::class, 'promotions'])->name('promotions');
 Route::get('/aktsii/{id}', [IndexServices::class, 'promotion'])->name('promotion_page');
 Route::get('/kontakty', [IndexServices::class, 'contacts'])->name('contacts_page');
+Route::get('/blog/feed.xml', [BlogController::class, 'feed'])->name('blog.feed');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 

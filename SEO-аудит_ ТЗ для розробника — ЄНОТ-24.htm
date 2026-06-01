@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="uk"><head>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO-аудит: ТЗ для розробника — ЄНОТ-24</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+  :root {
+    --red: #C62828;
+    --red-light: #FFEBEE;
+    --green: #2E7D32;
+    --green-light: #E8F5E9;
+    --blue: #1565C0;
+    --blue-light: #E3F2FD;
+    --orange: #E65100;
+    --orange-light: #FFF3E0;
+    --gray: #37474F;
+    --gray-light: #F5F5F5;
+    --border: #CFD8DC;
+    --text: #212121;
+    --text-muted: #607D8B;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: #FAFAFA;
+    line-height: 1.6;
+  }
+
+  .page {
+    max-width: 960px;
+    margin: 40px auto;
+    background: white;
+    box-shadow: 0 2px 20px rgba(0,0,0,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  .doc-header {
+    background: var(--blue);
+    color: white;
+    padding: 40px 48px;
+    border-bottom: 4px solid #0D47A1;
+  }
+  .doc-header h1 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.3px;
+    margin-bottom: 8px;
+  }
+  .doc-header .meta {
+    font-size: 13px;
+    opacity: 0.8;
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+  }
+  .doc-header .meta span::before { content: "▸ "; opacity: 0.6; }
+
+  /* CONTENT */
+  .content { padding: 0 48px 48px; }
+
+  /* SECTIONS */
+  .section { margin-top: 48px; }
+
+  h2.section-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--blue);
+    padding: 12px 0 12px 16px;
+    border-left: 4px solid var(--blue);
+    margin-bottom: 20px;
+    background: var(--blue-light);
+  }
+
+  h3.sub-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--gray);
+    margin: 24px 0 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  p { margin-bottom: 10px; color: var(--text); }
+
+  /* BADGES */
+  .badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-critical { background: var(--red); color: white; }
+  .badge-important { background: var(--orange); color: white; }
+  .badge-nice { background: var(--green); color: white; }
+  .badge-missing { background: var(--red); color: white; }
+  .badge-partial { background: var(--orange); color: white; }
+  .badge-ok { background: var(--green); color: white; }
+
+  /* COMPARISON TABLE */
+  .compare-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .compare-table th {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .compare-table th:nth-child(1) { background: var(--blue); color: white; width: 180px; }
+  .compare-table th:nth-child(2) { background: var(--red); color: white; }
+  .compare-table th:nth-child(3) { background: var(--green); color: white; }
+  .compare-table th:nth-child(4) { background: var(--gray); color: white; width: 100px; }
+
+  .compare-table td {
+    padding: 9px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table td:nth-child(1) { background: var(--blue-light); font-weight: 600; font-family: 'IBM Plex Mono', monospace; font-size: 12px; }
+  .compare-table td:nth-child(2) { background: var(--red-light); color: #B71C1C; }
+  .compare-table td:nth-child(3) { background: var(--green-light); color: #1B5E20; }
+  .compare-table td:nth-child(4) { background: #FAFAFA; text-align: center; }
+  .missing { color: #9E9E9E !important; font-style: italic; }
+
+  /* TASK TABLE */
+  .task-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .task-table th {
+    background: var(--blue);
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+  }
+  .task-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  .task-table tr:nth-child(even) td { background: #F9FAFB; }
+  .task-table tr:last-child td { border-bottom: none; }
+  .task-num {
+    font-weight: 700;
+    color: var(--blue);
+    font-size: 15px;
+    text-align: center;
+    width: 36px;
+  }
+  .task-where {
+    color: var(--text-muted);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  /* TASK BLOCKS */
+  .task-block {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin: 20px 0;
+    overflow: hidden;
+  }
+  .task-block-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .task-block-header.critical { background: #FFEBEE; border-bottom-color: #FFCDD2; }
+  .task-block-header.important { background: #FFF3E0; border-bottom-color: #FFE0B2; }
+  .task-block-header.nice { background: var(--green-light); border-bottom-color: #C8E6C9; }
+  .task-block-header h4 { font-size: 14px; font-weight: 700; }
+  .task-block-body { padding: 16px; }
+
+  /* CODE */
+  code {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: #F5F5F5;
+    padding: 2px 5px;
+    border-radius: 3px;
+    color: #B71C1C;
+  }
+  pre {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    background: #263238;
+    color: #ECEFF1;
+    padding: 16px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 10px 0;
+    line-height: 1.7;
+  }
+  pre .tag { color: #80CBC4; }
+  pre .attr { color: #FFE082; }
+  pre .val { color: #A5D6A7; }
+  pre .comment { color: #546E7A; font-style: italic; }
+
+  /* NOTE / ALERT */
+  .alert {
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin: 14px 0;
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .alert-warn { background: #FFF8E1; border-left: 3px solid #FFC107; }
+  .alert-info { background: var(--blue-light); border-left: 3px solid var(--blue); }
+  .alert-success { background: var(--green-light); border-left: 3px solid var(--green); }
+  .alert .icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+  ul.checks { list-style: none; padding: 0; margin: 8px 0; }
+  ul.checks li { padding: 5px 0 5px 22px; position: relative; font-size: 13px; }
+  ul.checks li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+
+  /* FORMAT EXAMPLE */
+  .format-box {
+    background: #F5F5F5;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    font-size: 13px;
+  }
+  .format-box .label { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; }
+  .format-box .value { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--blue); }
+
+  /* TWO-COL */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0; }
+  .col-box { border: 1px solid var(--border); border-radius: 4px; padding: 14px; }
+  .col-box .col-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .col-box.bad .col-label { color: var(--red); }
+  .col-box.good .col-label { color: var(--green); }
+  .col-box .col-value { font-family: 'IBM Plex Mono', monospace; font-size: 12px; line-height: 1.6; }
+  .col-box.bad { background: var(--red-light); border-color: #FFCDD2; }
+  .col-box.good { background: var(--green-light); border-color: #C8E6C9; }
+
+  /* SEPARATOR */
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  /* FOOTER */
+  .doc-footer {
+    background: var(--gray-light);
+    border-top: 1px solid var(--border);
+    padding: 20px 48px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+
+  @media print {
+    body { background: white; }
+    .page { box-shadow: none; margin: 0; }
+    pre { white-space: pre-wrap; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="doc-header">
+    <h1>SEO-аудит: Технічне завдання для розробника</h1>
+    <div class="meta">
+      <span>Сайт: enot-24.com.ua</span>
+      <span>Конкурент: ceh.ua</span>
+      <span>Травень 2026</span>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- SECTION 1 -->
+    <div class="section">
+      <h2 class="section-title">1. Пояснення: мета-теги vs мікророзмітка</h2>
+
+      <h3 class="sub-title">Мета-теги (title, description, og-теги)</h3>
+      <p>Це невидимий для відвідувачів код у <code>&lt;head&gt;</code> кожної сторінки. Саме його Google читає і показує у результатах пошуку. Якщо <code>title</code> неправильний — Google не розуміє, по якому запиту ранжувати сторінку. Якщо <code>description</code> порожній — Google або придумує його сам (часто погано), або бере перший абзац тексту.</p>
+
+      <h3 class="sub-title">Мікророзмітка Schema.org</h3>
+      <p>Це окремий блок коду (зазвичай JSON-LD у тезі <code>&lt;script&gt;</code>),
+ який говорить Google: «ця сторінка — послуга», «ось ціна», «ось адреса 
+організації». Завдяки мікророзмітці у результатах пошуку з'являються 
+зірочки, ціна, адреса прямо у видачі — так звані <strong>rich snippets</strong>.</p>
+
+      <div class="alert alert-warn">
+        <span class="icon">⚠</span>
+        <span>У ЄНОТ-24 мікророзмітки немає взагалі. На сторінках послуг
+ також відсутні майже всі мета-теги. Саме через це конкурент ЦЕХ вище у 
+видачі — не тому що кращий, а тому що технічно правильніше оформлений.</span>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- SECTION 2 -->
+    <div class="section">
+      <h2 class="section-title">2. Порівняння мета-тегів: ЄНОТ-24 vs ЦЕХ</h2>
+      <p style="color:var(--text-muted); font-size:13px; margin-bottom:16px;">Приклад:
+ сторінка послуги ЄНОТ-24 — 
+/poslugi-ta-cini/khimchistka-vzuttya/posluga/baletky &nbsp;|&nbsp; ЦЕХ —
+ /uk/service/himchistka-kostyumov/</p>
+
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Тег</th>
+            <th>ЄНОТ-24 (зараз)</th>
+            <th>ЦЕХ (конкурент)</th>
+            <th>Статус</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>&lt;title&gt;</td>
+            <td>Балетки - Послуга хімчистки - Екочистка одягу та домашнього текстилю</td>
+            <td>Хімчистка костюма ціна Київ: здати смокінг в хімчистку</td>
+            <td><span class="badge badge-partial">Неповний</span></td>
+          </tr>
+          <tr>
+            <td>&lt;meta description&gt;</td>
+            <td class="missing">— відсутній</td>
+            <td>Хімчистка чоловічих костюмів від всіх видів забруднень, краща ціна, термінова чистка, телефон</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>&lt;canonical&gt;</td>
+            <td class="missing">— відсутній</td>
+            <td>https://ceh.ua/uk/service/himchistka-kostyumov/</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>og:title</td>
+            <td class="missing">— відсутній</td>
+            <td>Хімчистка костюма ціна Київ: здати смокінг в хімчистку</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>og:description</td>
+            <td class="missing">— відсутній</td>
+            <td>Хімчистка чоловічих костюмів, краща ціна, термінова чистка</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>og:url</td>
+            <td class="missing">— відсутній</td>
+            <td>https://ceh.ua/uk/service/himchistka-kostyumov/</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>og:locale</td>
+            <td class="missing">— відсутній</td>
+            <td>uk_UA</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>og:site_name</td>
+            <td class="missing">— відсутній</td>
+            <td>Хімчистка «ЦЕХ»</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>twitter:card</td>
+            <td class="missing">— відсутній</td>
+            <td>summary_large_image</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>robots</td>
+            <td>index, follow (лише на деяких)</td>
+            <td>index, follow, max-image-preview:large, max-snippet:-1</td>
+            <td><span class="badge badge-partial">Неповний</span></td>
+          </tr>
+          <tr>
+            <td>Schema.org</td>
+            <td class="missing">— відсутній повністю</td>
+            <td>Є: LocalBusiness, Service, BreadcrumbList</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+          <tr>
+            <td>article:modified_time</td>
+            <td class="missing">— відсутній</td>
+            <td>Є (дата останнього оновлення)</td>
+            <td><span class="badge badge-missing">Відсутній</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <!-- SECTION 3 -->
+    <div class="section">
+      <h2 class="section-title">3. Завдання для розробника</h2>
+      <div class="alert alert-info">
+        <span class="icon">ℹ</span>
+        <span>Всі правки нижче стосуються <strong>шаблону</strong> 
+сторінок послуг. Оскільки таких сторінок сотні — розробнику потрібно 
+змінити шаблон один раз, і всі сторінки закриються автоматично.</span>
+      </div>
+
+      <!-- TASK 1 -->
+      <div class="task-block">
+        <div class="task-block-header critical">
+          <span class="badge badge-critical">Критично</span>
+          <h4>Завдання 1 — Виправити формат &lt;title&gt;</h4>
+        </div>
+        <div class="task-block-body">
+          <div class="two-col">
+            <div class="col-box bad">
+              <div class="col-label">Зараз (погано)</div>
+              <div class="col-value">Балетки - Послуга хімчистки - Екочистка одягу та домашнього текстилю</div>
+            </div>
+            <div class="col-box good">
+              <div class="col-label">Потрібно (добре)</div>
+              <div class="col-value">Хімчистка балеток у Києві — ціна, кур'єр | ЄНОТ-24</div>
+            </div>
+          </div>
+          <div class="format-box">
+            <div class="label">Шаблон</div>
+            <div class="value">{Назва послуги} у Києві — ціна, кур'єр | ЄНОТ-24</div>
+          </div>
+          <div class="alert alert-warn" style="margin-top:10px;">
+            <span class="icon">⚠</span>
+            <span>Довжина title — не більше 60 символів. Якщо назва послуги довга — скорочувати.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 2 -->
+      <div class="task-block">
+        <div class="task-block-header critical">
+          <span class="badge badge-critical">Критично</span>
+          <h4>Завдання 2 — Додати &lt;meta name="description"&gt;</h4>
+        </div>
+        <div class="task-block-body">
+          <p>Зараз цей тег відсутній на всіх сторінках послуг. Потрібно додати шаблон:</p>
+          <div class="format-box">
+            <div class="label">Шаблон</div>
+            <div class="value">{Назва послуги} у Києві від ЄНОТ-24. Професійна чистка, безпечна хімія, кур'єрська доставка. Актуальні ціни.</div>
+          </div>
+          <p style="margin-top:8px;">Приклад готового тегу:</p>
+          <pre><span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"description"</span>
+      <span class="attr">content</span>=<span class="val">"Хімчистка балеток у Києві від ЄНОТ-24. Професійна чистка, безпечна хімія, кур'єрська доставка. Актуальні ціни."</span><span class="tag">&gt;</span></pre>
+          <div class="alert alert-warn">
+            <span class="icon">⚠</span>
+            <span>Оптимальна довжина: 130–160 символів. Більше 160 — Google обрізає в сніпеті.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- TASK 3 -->
+      <div class="task-block">
+        <div class="task-block-header critical">
+          <span class="badge badge-critical">Критично</span>
+          <h4>Завдання 3 — Додати canonical URL</h4>
+        </div>
+        <div class="task-block-body">
+          <p>Canonical вказує Google яка URL є основною — захист від дублювання контенту.</p>
+          <pre><span class="tag">&lt;link</span> <span class="attr">rel</span>=<span class="val">"canonical"</span> <span class="attr">href</span>=<span class="val">"https://enot-24.com.ua{поточний URL сторінки}"</span><span class="tag">&gt;</span></pre>
+        </div>
+      </div>
+
+      <!-- TASK 4 -->
+      <div class="task-block">
+        <div class="task-block-header important">
+          <span class="badge badge-important">Важливо</span>
+          <h4>Завдання 4 — Додати повний комплект og-тегів</h4>
+        </div>
+        <div class="task-block-body">
+          <p>Open Graph теги потрібні для коректного відображення при поширенні в соцмережах і для сигналів Google.</p>
+          <pre><span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:title"</span>       <span class="attr">content</span>=<span class="val">"{той самий title}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:description"</span>  <span class="attr">content</span>=<span class="val">"{той самий description}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:url"</span>         <span class="attr">content</span>=<span class="val">"https://enot-24.com.ua{URL}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:locale"</span>      <span class="attr">content</span>=<span class="val">"uk_UA"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:site_name"</span>   <span class="attr">content</span>=<span class="val">"ЄНОТ-24"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:type"</span>        <span class="attr">content</span>=<span class="val">"website"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">property</span>=<span class="val">"og:image"</span>       <span class="attr">content</span>=<span class="val">"https://enot-24.com.ua/storage/src/logo/enot-white-bg.png"</span><span class="tag">&gt;</span></pre>
+        </div>
+      </div>
+
+      <!-- TASK 5 -->
+      <div class="task-block">
+        <div class="task-block-header important">
+          <span class="badge badge-important">Важливо</span>
+          <h4>Завдання 5 — Додати twitter:card теги</h4>
+        </div>
+        <div class="task-block-body">
+          <pre><span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"twitter:card"</span>        <span class="attr">content</span>=<span class="val">"summary_large_image"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"twitter:title"</span>       <span class="attr">content</span>=<span class="val">"{той самий title}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"twitter:description"</span>  <span class="attr">content</span>=<span class="val">"{той самий description}"</span><span class="tag">&gt;</span>
+<span class="tag">&lt;meta</span> <span class="attr">name</span>=<span class="val">"twitter:image"</span>       <span class="attr">content</span>=<span class="val">"https://enot-24.com.ua/storage/src/logo/enot-white-bg.png"</span><span class="tag">&gt;</span></pre>
+        </div>
+      </div>
+
+      <!-- TASK 6 -->
+      <div class="task-block">
+        <div class="task-block-header important">
+          <span class="badge badge-important">Важливо</span>
+          <h4>Завдання 6 — Виправити meta robots</h4>
+        </div>
+        <div class="task-block-body">
+          <div class="two-col">
+            <div class="col-box bad">
+              <div class="col-label">Зараз</div>
+              <div class="col-value">index, follow</div>
+            </div>
+            <div class="col-box good">
+              <div class="col-label">Потрібно</div>
+              <div class="col-value">index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1</div>
+            </div>
+          </div>
+          <p style="margin-top:8px;"><code>max-snippet:-1</code> дозволяє Google показувати більший фрагмент тексту у видачі — це підвищує CTR.</p>
+        </div>
+      </div>
+
+      <!-- TASK 7 -->
+      <div class="task-block">
+        <div class="task-block-header important">
+          <span class="badge badge-important">Важливо</span>
+          <h4>Завдання 7 — Додати мікророзмітку Schema.org</h4>
+        </div>
+        <div class="task-block-body">
+          <p>Мікророзмітка дозволяє Google показувати розширені сніпети у видачі (ціна, адреса, зірочки відгуків). Додати три типи:</p>
+
+          <h3 class="sub-title" style="margin-top:20px;">7а. CleaningService — один раз на головній сторінці</h3>
+          <pre><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"application/ld+json"</span><span class="tag">&gt;</span>
+{
+  <span class="attr">"@context"</span>: <span class="val">"https://schema.org"</span>,
+  <span class="attr">"@type"</span>: <span class="val">"CleaningService"</span>,
+  <span class="attr">"name"</span>: <span class="val">"ЄНОТ-24"</span>,
+  <span class="attr">"url"</span>: <span class="val">"https://enot-24.com.ua"</span>,
+  <span class="attr">"telephone"</span>: <span class="val">"+380678872233"</span>,
+  <span class="attr">"address"</span>: {
+    <span class="attr">"@type"</span>: <span class="val">"PostalAddress"</span>,
+    <span class="attr">"addressLocality"</span>: <span class="val">"Київ"</span>,
+    <span class="attr">"addressCountry"</span>: <span class="val">"UA"</span>
+  },
+  <span class="attr">"openingHours"</span>: <span class="val">"Mo-Su 09:00-21:00"</span>,
+  <span class="attr">"priceRange"</span>: <span class="val">"$$"</span>
+}
+<span class="tag">&lt;/script&gt;</span></pre>
+
+          <h3 class="sub-title">7б. Service + Offer — на кожній сторінці послуги (шаблон)</h3>
+          <pre><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"application/ld+json"</span><span class="tag">&gt;</span>
+{
+  <span class="attr">"@context"</span>: <span class="val">"https://schema.org"</span>,
+  <span class="attr">"@type"</span>: <span class="val">"Service"</span>,
+  <span class="attr">"name"</span>: <span class="val">"{Назва послуги}"</span>,
+  <span class="attr">"provider"</span>: { <span class="attr">"@type"</span>: <span class="val">"LocalBusiness"</span>, <span class="attr">"name"</span>: <span class="val">"ЄНОТ-24"</span> },
+  <span class="attr">"areaServed"</span>: <span class="val">"Київ"</span>,
+  <span class="attr">"offers"</span>: {
+    <span class="attr">"@type"</span>: <span class="val">"Offer"</span>,
+    <span class="attr">"price"</span>: <span class="val">"{ціна послуги}"</span>,
+    <span class="attr">"priceCurrency"</span>: <span class="val">"UAH"</span>
+  }
+}
+<span class="tag">&lt;/script&gt;</span></pre>
+
+          <h3 class="sub-title">7в. BreadcrumbList — хлібні крихти на кожній сторінці</h3>
+          <pre><span class="tag">&lt;script</span> <span class="attr">type</span>=<span class="val">"application/ld+json"</span><span class="tag">&gt;</span>
+{
+  <span class="attr">"@context"</span>: <span class="val">"https://schema.org"</span>,
+  <span class="attr">"@type"</span>: <span class="val">"BreadcrumbList"</span>,
+  <span class="attr">"itemListElement"</span>: [
+    { <span class="attr">"@type"</span>: <span class="val">"ListItem"</span>, <span class="attr">"position"</span>: 1, <span class="attr">"name"</span>: <span class="val">"Головна"</span>, <span class="attr">"item"</span>: <span class="val">"https://enot-24.com.ua"</span> },
+    { <span class="attr">"@type"</span>: <span class="val">"ListItem"</span>, <span class="attr">"position"</span>: 2, <span class="attr">"name"</span>: <span class="val">"{Категорія}"</span>, <span class="attr">"item"</span>: <span class="val">"{URL категорії}"</span> },
+    { <span class="attr">"@type"</span>: <span class="val">"ListItem"</span>, <span class="attr">"position"</span>: 3, <span class="attr">"name"</span>: <span class="val">"{Назва послуги}"</span>, <span class="attr">"item"</span>: <span class="val">"{URL послуги}"</span> }
+  ]
+}
+<span class="tag">&lt;/script&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+
+    <!-- SECTION 4 — SUMMARY -->
+    <div class="section">
+      <h2 class="section-title">4. Зведена таблиця пріоритетів</h2>
+      <table class="task-table">
+        <thead>
+          <tr>
+            <th style="width:40px;">#</th>
+            <th>Завдання</th>
+            <th style="width:140px;">Пріоритет</th>
+            <th style="width:160px;">Де застосувати</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="task-num">1</td>
+            <td>Виправити формат &lt;title&gt; на всіх сторінках послуг</td>
+            <td><span class="badge badge-critical">Критично</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+          <tr>
+            <td class="task-num">2</td>
+            <td>Додати &lt;meta description&gt; до всіх сторінок послуг</td>
+            <td><span class="badge badge-critical">Критично</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+          <tr>
+            <td class="task-num">3</td>
+            <td>Додати canonical URL до всіх сторінок</td>
+            <td><span class="badge badge-critical">Критично</span></td>
+            <td class="task-where">Всі сторінки</td>
+          </tr>
+          <tr>
+            <td class="task-num">4</td>
+            <td>Додати повний комплект og-тегів</td>
+            <td><span class="badge badge-important">Важливо</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+          <tr>
+            <td class="task-num">5</td>
+            <td>Додати twitter:card теги</td>
+            <td><span class="badge badge-important">Важливо</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+          <tr>
+            <td class="task-num">6</td>
+            <td>Виправити meta robots (додати max-snippet та ін.)</td>
+            <td><span class="badge badge-important">Важливо</span></td>
+            <td class="task-where">Всі сторінки</td>
+          </tr>
+          <tr>
+            <td class="task-num">7</td>
+            <td>Додати Schema.org CleaningService на головну</td>
+            <td><span class="badge badge-important">Важливо</span></td>
+            <td class="task-where">Головна сторінка</td>
+          </tr>
+          <tr>
+            <td class="task-num">8</td>
+            <td>Додати Schema.org Service + Offer на кожну послугу</td>
+            <td><span class="badge badge-important">Важливо</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+          <tr>
+            <td class="task-num">9</td>
+            <td>Додати Schema.org BreadcrumbList</td>
+            <td><span class="badge badge-nice">Бажано</span></td>
+            <td class="task-where">Шаблон послуги</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <hr>
+
+    <!-- SECTION 5 -->
+    <div class="section">
+      <h2 class="section-title">5. Як перевірити результат</h2>
+      <div class="alert alert-success">
+        <span class="icon">✓</span>
+        <span>Всі інструменти нижче — <strong>безкоштовні</strong>.</span>
+      </div>
+      <ul class="checks">
+        <li><strong>Google Search Console</strong> → Покриття → перевірити що сторінки індексуються після правок</li>
+        <li><strong>Google Rich Results Test</strong> (search.google.com/test/rich-results) → вставити URL послуги → перевірити мікророзмітку</li>
+        <li><strong>Serpstat</strong> → Аналіз домену → enot-24.com.ua → порівняти видимість до і після (є 7-денний безкоштовний тест)</li>
+        <li>Ввести у Google <strong>site:enot-24.com.ua</strong> і подивитись як виглядають сніпети — чи підтягнулись description</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="doc-footer">
+    Документ підготовлено на основі аналізу enot-24.com.ua та ceh.ua &nbsp;·&nbsp; Травень 2026
+  </div>
+
+</div>
+
+
+</body></html>

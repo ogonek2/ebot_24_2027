@@ -4,7 +4,13 @@
     Викликати кур'єра - Екочистка одягу та домашнього текстилю
 @endsection
 
+@php
+    $breadcrumbs = [breadcrumb_home(), ['name' => 'Викликати кур\'єра']];
+@endphp
+
 @section('content')
+    @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs])
+
     {{-- Hero Section --}}
     <div class="container mx-auto px-4 mb-20">
         <div class="flex flex-col-reverse lg:flex-row gap-12 items-center">

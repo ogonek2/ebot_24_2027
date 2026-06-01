@@ -43,22 +43,23 @@
     <meta name="twitter:image" content="{{ $ogImage }}">
     
     {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
+    <meta name="robots" content="{{ config('seo.robots_index') }}">
     <link rel="canonical" href="{{ $pageUrl }}">
     <meta name="author" content="{{ $siteName }}">
 @endsection
 
+@php
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Акції', 'url' => route('promotions')],
+        ['name' => $promotion->name ?? 'Акція'],
+    ];
+@endphp
+
 @section('content')
     <div class="pb-8 md:pb-12">
-        <div class="container mx-auto px-4 md:px-0 lg:px-0">
-            {{-- Back Button --}}
-            <div class="mb-6">
-                <a href="{{ route('promotions') }}" 
-                   class="inline-flex items-center gap-2 text-gray-600 hover:text-primary transition-colors duration-300">
-                    <i class="fas fa-arrow-left"></i>
-                    <span>Назад до акцій</span>
-                </a>
-            </div>
+        <div class="container mx-auto px-4 md:px-6">
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0'])
 
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 {{-- Main Content --}}

@@ -49,7 +49,7 @@ class RouteServiceProvider extends ServiceProvider
 
             Route::middleware('web')
                 ->namespace($this->namespace)
-                ->group(base_path('routes/blog_dashboard.php'));
+                ->group(base_path('routes/copywriter_dashboard.php'));
         });
     }
 

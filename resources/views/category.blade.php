@@ -1,62 +1,59 @@
 @extends('layouts.app')
 
+@php
+    use App\Support\SeoResolver;
+
+    $siteName = config('seo.site_name', 'ЄНОТ-24');
+    $servicesCount = $category->getAllServices()->count();
+    $fallbackTitle = $category->name . ' у Києві — послуги та ціни | ' . $siteName;
+    $fallbackDescription = 'Послуги ' . $category->name . ' від ' . $siteName . '. '
+        . ($servicesCount > 0 ? $servicesCount . ' послуг у категорії. ' : '')
+        . 'Хімчистка з кур\'єрською доставкою. Актуальні ціни.';
+    $serviceNames = $category->services->take(5)->pluck('name')->implode(', ');
+    $fallbackKeywords = $category->name . ', хімчистка, послуги, ціни, Київ, ' . $siteName
+        . ($serviceNames ? ', ' . $serviceNames : '');
+
+    $pageTitle = SeoResolver::title($category, $fallbackTitle);
+    $pageDescription = SeoResolver::description($category, $fallbackDescription);
+    $pageUrl = SeoResolver::canonical($category, route('category_page', $category->href, false));
+    $keywords = SeoResolver::keywords($category, $fallbackKeywords);
+    $robots = SeoResolver::robots($category);
+    $ogTitle = SeoResolver::ogTitle($category, $pageTitle);
+    $ogDescription = SeoResolver::ogDescription($category, $pageDescription);
+    $ogImage = SeoResolver::ogImageUrl($category);
+@endphp
+
 @section('title')
-    {{ $category->name }} - Хімчистка Єнот 24 / Київ
+    {{ $pageTitle }}
+@endsection
+
+@section('seo_tags')
+    @include('includes.seo.meta', [
+        'pageTitle' => $pageTitle,
+        'pageDescription' => $pageDescription,
+        'pageUrl' => $pageUrl,
+        'keywords' => $keywords,
+        'robots' => $robots,
+        'ogTitle' => $ogTitle,
+        'ogDescription' => $ogDescription,
+        'ogImage' => $ogImage,
+        'modifiedTime' => optional($category->updated_at)->toAtomString(),
+    ])
 @endsection
 
 @php
-    $siteName = config('app.name', 'ЄНОТ 24');
-    $pageTitle = $category->name . ' - ' . $siteName;
-    $servicesCount = $category->getAllServices()->count();
-    $pageDescription = 'Послуги ' . $category->name . ' від ЄНОТ 24. ' . ($servicesCount > 0 ? $servicesCount . ' ' . ($servicesCount === 1 ? 'послуга' : 'послуг') . ' у категорії.' : '') . ' Хімчистка одягу та домашнього текстилю з кур\'єрською доставкою. Актуальні ціни.';
-    $pageUrl = route('category_page', $category->href);
-    
-    // Используем изображение категории или дефолтное изображение
-    $ogImage = $category->category_img 
-        ? asset('storage/' . $category->category_img)
-        : asset('storage/src/logo/full_logo.svg');
-    
-    // Формируем keywords из названия категории и услуг
-    $serviceNames = $category->services->take(5)->pluck('name')->implode(', ');
-    $keywords = $category->name . ', хімчистка, послуги, ціни, одяг, текстиль, кур\'єрська доставка, ЄНОТ 24';
-    if ($serviceNames) {
-        $keywords .= ', ' . $serviceNames;
-    }
+    $breadcrumbs = [
+        breadcrumb_home(),
+        ['name' => 'Послуги та ціни', 'url' => route('services')],
+        ['name' => $category->name],
+    ];
 @endphp
-
-@section('seo_tags')
-    {{-- Basic Meta Tags --}}
-    <meta name="description" content="{{ $pageDescription }}">
-    <meta name="keywords" content="{{ $keywords }}">
-    
-    {{-- Open Graph Meta Tags --}}
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ $pageUrl }}">
-    <meta property="og:title" content="{{ $pageTitle }}">
-    <meta property="og:description" content="{{ $pageDescription }}">
-    <meta property="og:image" content="{{ $ogImage }}">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{{ $category->name }}">
-    <meta property="og:site_name" content="{{ $siteName }}">
-    <meta property="og:locale" content="uk_UA">
-    
-    {{-- Twitter Card Meta Tags --}}
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="{{ $pageUrl }}">
-    <meta name="twitter:title" content="{{ $pageTitle }}">
-    <meta name="twitter:description" content="{{ $pageDescription }}">
-    <meta name="twitter:image" content="{{ $ogImage }}">
-    
-    {{-- Additional Meta Tags --}}
-    <meta name="robots" content="index, follow">
-    <link rel="canonical" href="{{ $pageUrl }}">
-    <meta name="author" content="{{ $siteName }}">
-@endsection
 
 @section('content')
     <div class="pb-8 md:pb-12">
         <div class="container mx-auto md:px-4">
+            @include('includes.elements.breadcrumbs', ['breadcrumbs' => $breadcrumbs, 'wrapperClass' => 'px-0 md:px-0'])
+
             {{-- Category Header --}}
             <div class="mb-2 md:mb-4">
                 <div class="py-4">

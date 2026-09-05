@@ -1,17 +1,37 @@
+import careSymbolsData from "./careSymbols.json";
+
 export type CareSymbolKind =
   | "dryclean-p"
+  | "dryclean-p-mild"
   | "dryclean-f"
+  | "dryclean-f-mild"
+  | "dryclean-a"
+  | "no-dryclean"
+  | "wet-clean"
+  | "wet-clean-mild"
+  | "no-wet-clean"
   | "wash-30"
+  | "wash-30-mild"
+  | "wash-40"
+  | "wash-60"
+  | "wash-95"
   | "wash-hand"
   | "no-wash"
   | "bleach"
+  | "bleach-oxygen"
   | "no-bleach"
   | "iron-low"
   | "iron-medium"
+  | "iron-high"
   | "no-iron"
   | "tumble-dry"
+  | "tumble-low"
+  | "tumble-high"
   | "no-tumble"
-  | "dry-flat";
+  | "line-dry"
+  | "drip-dry"
+  | "dry-flat"
+  | "dry-shade";
 
 export type CareSymbol = {
   id: string;
@@ -20,87 +40,8 @@ export type CareSymbol = {
   tip: string;
 };
 
-/** ISO 3758 — підказки для клієнта */
-export const CARE_SYMBOLS: CareSymbol[] = [
-  {
-    id: "dry-p",
-    kind: "dryclean-p",
-    title: "Хімчистка (P)",
-    tip: "Делікатна професійна чистка розчинником. Підходить для вовни, шовку та делікатних тканин.",
-  },
-  {
-    id: "dry-f",
-    kind: "dryclean-f",
-    title: "М’яка хімчистка (F)",
-    tip: "Щадна чистка з обмеженням на агресивні розчинники — для чутливих матеріалів і наповнювачів.",
-  },
-  {
-    id: "wash-30",
-    kind: "wash-30",
-    title: "Прання 30 °C",
-    tip: "Делікатне прання у прохолодній воді. Зберігає форму та колір; не викручувати.",
-  },
-  {
-    id: "wash-hand",
-    kind: "wash-hand",
-    title: "Ручне прання",
-    tip: "Тільки вручну в прохолодній воді. Не терти — делікатно віджати в рушник.",
-  },
-  {
-    id: "no-wash",
-    kind: "no-wash",
-    title: "Не прати",
-    tip: "Домашнє прання заборонене — лише професійна чистка, інакше можливі усадка та деформація.",
-  },
-  {
-    id: "bleach",
-    kind: "bleach",
-    title: "Відбілювання",
-    tip: "Дозволено будь-яке відбілювання. Перевіряйте етикетку перед застосуванням на кольорових речах.",
-  },
-  {
-    id: "no-bleach",
-    kind: "no-bleach",
-    title: "Не відбілювати",
-    tip: "Хлор та агресивні відбілювачі зашкодять волокнам і змінять колір.",
-  },
-  {
-    id: "iron-low",
-    kind: "iron-low",
-    title: "Prasuvannya · nyzka t°",
-    tip: "Prasuvannya do 110 °C (●). Dlya syntetyky — bez pary abo minimum pary.",
-  },
-  {
-    id: "iron-med",
-    kind: "iron-medium",
-    title: "Prasuvannya · serednya t°",
-    tip: "Prasuvannya do 150 °C (●●). Dlya bavovny ta lonu — mozhna z paroyu.",
-  },
-  {
-    id: "no-iron",
-    kind: "no-iron",
-    title: "Не прасувати",
-    tip: "Термообробка заборонена — ризик блиску, плавлення волокон або відбитків швів.",
-  },
-  {
-    id: "tumble",
-    kind: "tumble-dry",
-    title: "Сушіння в барабані",
-    tip: "Машинне сушіння на низькому режимі. Не пересушувати — краще залишити трохи вологи.",
-  },
-  {
-    id: "no-tumble",
-    kind: "no-tumble",
-    title: "Не сушити в барабані",
-    tip: "Висока температура деформує річ. Сушіть на плічках або горизонтально.",
-  },
-  {
-    id: "flat",
-    kind: "dry-flat",
-    title: "Сушити горизонтально",
-    tip: "Розкладіть на рівній поверхні — в’язані речі не розтягнуться під власною вагою.",
-  },
-];
+/** ISO 3758 — підказки для клієнта (дані з careSymbols.json) */
+export const CARE_SYMBOLS: CareSymbol[] = careSymbolsData as CareSymbol[];
 
 export type PlanetPhase = "idle" | "pop" | "grow";
 

@@ -6,21 +6,19 @@ import {
   faShirt,
   faCartShopping,
   faLocationDot,
-  faUser,
 } from "@fortawesome/free-solid-svg-icons";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { ROUTES } from "@/lib/routes";
 import { pathIsServices } from "@/lib/navigation";
 import { useCartOptional } from "@/context/CartContext";
 
-type TabId = "home" | "services" | "order" | "locations" | "profile";
+type TabId = "home" | "services" | "order" | "locations";
 
 const tabs: Array<{ id: TabId; href: string; icon: IconDefinition; label: string }> = [
   { id: "home", href: ROUTES.home, icon: faHouse, label: "Головна" },
   { id: "services", href: ROUTES.services, icon: faShirt, label: "Послуги" },
   { id: "order", href: ROUTES.cart, icon: faCartShopping, label: "Кошик" },
   { id: "locations", href: ROUTES.locations, icon: faLocationDot, label: "Локації" },
-  { id: "profile", href: "/home", icon: faUser, label: "Кабінет" },
 ];
 
 function resolveActiveTab(pathname: string): TabId {
@@ -28,7 +26,6 @@ function resolveActiveTab(pathname: string): TabId {
   if (pathIsServices(pathname) || pathname === ROUTES.b2b) return "services";
   if (pathname === ROUTES.courier || pathname === ROUTES.cart || pathname === ROUTES.checkout) return "order";
   if (pathname === ROUTES.locations) return "locations";
-  if (pathname === "/home") return "profile";
   return "home";
 }
 

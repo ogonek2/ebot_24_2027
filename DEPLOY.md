@@ -26,6 +26,9 @@
 
 После правок: `php artisan config:clear && php artisan config:cache`.
 
+SPA CSRF: `GET /sanctum/csrf-cookie` → `GET /sanctum/csrf-token` → заголовок `X-CSRF-TOKEN`.  
+Для разных поддоменов обязателен родительский `SESSION_DOMAIN` (и `SameSite=none` + `Secure`).
+
 ---
 
 ## Быстрый деплой

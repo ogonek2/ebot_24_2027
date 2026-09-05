@@ -46,21 +46,20 @@ Route::post('/courier/request', [App\Http\Controllers\FeedbackController::class,
 
 /*
 |--------------------------------------------------------------------------
-| Session API (cart, orders) — requires cookies + CSRF
+| Session API (cart, orders) — cookies + CSRF via Sanctum stateful
 |--------------------------------------------------------------------------
+| Do NOT wrap in middleware('web'): api routes already use
+| EnsureFrontendRequestsAreStateful. Double web+api CSRF/session breaks SPA.
 */
-
-Route::middleware('web')->group(function () {
-    Route::get('/cart', [CartController::class, 'getCart']);
-    Route::post('/cart/add', [CartController::class, 'addToCart']);
-    Route::put('/cart/{key}', [CartController::class, 'updateCart']);
-    Route::delete('/cart/{key}', [CartController::class, 'removeFromCart']);
-    Route::post('/cart/clear', [CartController::class, 'clearCart']);
-    Route::get('/pickup-locations', [CartController::class, 'getPickupLocations']);
-    Route::post('/order/submit', [CartController::class, 'submitOrder']);
-    Route::get('/order/last', [CartController::class, 'getLastOrder']);
-    Route::post('/order/consultation', [CartController::class, 'submitConsultation']);
-});
+Route::get('/cart', [CartController::class, 'getCart']);
+Route::post('/cart/add', [CartController::class, 'addToCart']);
+Route::put('/cart/{key}', [CartController::class, 'updateCart']);
+Route::delete('/cart/{key}', [CartController::class, 'removeFromCart']);
+Route::post('/cart/clear', [CartController::class, 'clearCart']);
+Route::get('/pickup-locations', [CartController::class, 'getPickupLocations']);
+Route::post('/order/submit', [CartController::class, 'submitOrder']);
+Route::get('/order/last', [CartController::class, 'getLastOrder']);
+Route::post('/order/consultation', [CartController::class, 'submitConsultation']);
 
 Route::middleware('auth:sanctum')->get('/user', function (\Illuminate\Http\Request $request) {
     return $request->user();

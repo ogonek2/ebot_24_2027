@@ -28,6 +28,14 @@ Route::get('/blog/feed.xml', [BlogController::class, 'feed'])->name('blog.feed')
 
 Route::get('/invoice/{orderId}/download', [CartController::class, 'downloadInvoice'])->name('invoice.download');
 
+/*
+| SPA CSRF: plain token for X-CSRF-TOKEN header (web session, no api+web double stack).
+| Call after GET /sanctum/csrf-cookie so the same session cookie is used.
+*/
+Route::get('/sanctum/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+});
+
 Route::post('/admin/services/import', [App\Filament\Resources\ServiceResource\Pages\ImportServices::class, 'import'])
     ->name('filament.resources.services.import');
 

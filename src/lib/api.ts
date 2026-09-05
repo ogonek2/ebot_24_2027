@@ -9,7 +9,7 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${normalized}`;
 }
 
-/** Plain CSRF from /sanctum/csrf-token (works cross-subdomain; cookie XSRF often does not). */
+/** Plain CSRF from /api/csrf-token (works cross-subdomain; cookie XSRF often does not). */
 let csrfTokenMemory: string | null = null;
 let csrfReady: Promise<string> | null = null;
 
@@ -44,7 +44,7 @@ export function ensureCsrf(force = false): Promise<string> {
       throw new Error(`CSRF cookie failed: ${cookieRes.status}`);
     }
 
-    const tokenRes = await fetch(apiUrl("/sanctum/csrf-token"), {
+    const tokenRes = await fetch(apiUrl("/api/csrf-token"), {
       credentials: "include",
       headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
     });

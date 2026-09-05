@@ -42,7 +42,9 @@ VITE_API_URL=https://enot-api.qpanel-erp.online
 
 **Важно:** если на проде фронт и API на **одном** домене — `SESSION_SAME_SITE=lax`, `SESSION_DOMAIN=null`, `VITE_API_URL=` (пустой, same-origin).
 
-Если остаются **разные** поддомены — как на тесте: `SESSION_SAME_SITE=none`, `SESSION_SECURE_COOKIE=true`, общий родительский `SESSION_DOMAIN`.
+Если остаются **разные** поддомены — как на тесте: `SESSION_SAME_SITE=none`, `SESSION_SECURE_COOKIE=true`, общий родительский `SESSION_DOMAIN` (иначе session cookie не шарится → CSRF / пуста корзина).
+
+SPA: `GET /sanctum/csrf-cookie` → `GET /sanctum/csrf-token` → заголовок `X-CSRF-TOKEN`.
 
 ---
 

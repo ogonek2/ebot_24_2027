@@ -9,37 +9,88 @@ export function apiUrl(path: string): string {
   return `${API_BASE}${normalized}`;
 }
 
-let csrfReady: Promise<void> | null = null;
+/** Plain CSRF from /sanctum/csrf-token (works cross-subdomain; cookie XSRF often does not). */
+let csrfTokenMemory: string | null = null;
+let csrfReady: Promise<string> | null = null;
 
-export function ensureCsrf(): Promise<void> {
-  if (!csrfReady) {
-    csrfReady = fetch(apiUrl("/sanctum/csrf-cookie"), {
-      credentials: "include",
-    }).then(() => undefined);
-  }
-  return csrfReady;
+export function resetCsrf(): void {
+  csrfTokenMemory = null;
+  csrfReady = null;
 }
 
-function xsrfToken(): string {
-  const match = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+function xsrfCookieToken(): string {
+  const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
   return match ? decodeURIComponent(match[1]) : "";
 }
 
-async function apiFetch(path: string, init: RequestInit = {}) {
-  const method = (init.method ?? "GET").toUpperCase();
-  if (method !== "GET" && method !== "HEAD") {
-    await ensureCsrf();
+/**
+ * Warm Sanctum cookies + load plain CSRF into memory.
+ * Safe to call on app boot and before any mutating request.
+ */
+export function ensureCsrf(force = false): Promise<string> {
+  if (!force && csrfTokenMemory) {
+    return Promise.resolve(csrfTokenMemory);
   }
+  if (!force && csrfReady) {
+    return csrfReady;
+  }
+
+  csrfReady = (async () => {
+    const cookieRes = await fetch(apiUrl("/sanctum/csrf-cookie"), {
+      credentials: "include",
+      headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+    });
+    if (!cookieRes.ok) {
+      throw new Error(`CSRF cookie failed: ${cookieRes.status}`);
+    }
+
+    const tokenRes = await fetch(apiUrl("/sanctum/csrf-token"), {
+      credentials: "include",
+      headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
+    });
+    if (!tokenRes.ok) {
+      throw new Error(`CSRF token failed: ${tokenRes.status}`);
+    }
+
+    const data = (await tokenRes.json()) as { token?: string };
+    const token = data.token?.trim() || xsrfCookieToken();
+    if (!token) {
+      throw new Error("CSRF token missing");
+    }
+
+    csrfTokenMemory = token;
+    return token;
+  })().catch((err) => {
+    resetCsrf();
+    throw err;
+  });
+
+  return csrfReady;
+}
+
+function applyCsrfHeaders(headers: Headers, token: string) {
+  headers.set("X-CSRF-TOKEN", token);
+  const xsrf = xsrfCookieToken();
+  if (xsrf) {
+    headers.set("X-XSRF-TOKEN", xsrf);
+  }
+}
+
+async function apiFetch(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const needsCsrf = method !== "GET" && method !== "HEAD";
 
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
+  headers.set("X-Requested-With", "XMLHttpRequest");
   if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
-  if (method !== "GET" && method !== "HEAD") {
-    headers.set("X-XSRF-TOKEN", xsrfToken());
+
+  if (needsCsrf) {
+    const token = await ensureCsrf();
+    applyCsrfHeaders(headers, token);
   }
-  headers.set("X-Requested-With", "XMLHttpRequest");
 
   const res = await fetch(apiUrl(path), {
     ...init,
@@ -47,12 +98,51 @@ async function apiFetch(path: string, init: RequestInit = {}) {
     credentials: "include",
   });
 
+  if (res.status === 419 && needsCsrf && !retried) {
+    resetCsrf();
+    await ensureCsrf(true);
+    return apiFetch(path, init, true);
+  }
+
   if (!res.ok) {
     throw new Error(`API ${path} failed: ${res.status}`);
   }
 
   return res;
 }
+
+/** Like apiFetch but returns JSON even on 4xx (forms validation). Retries CSRF once on 419. */
+async function apiJson<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
+  const method = (init.method ?? "GET").toUpperCase();
+  const needsCsrf = method !== "GET" && method !== "HEAD";
+
+  const headers = new Headers(init.headers);
+  headers.set("Accept", "application/json");
+  headers.set("X-Requested-With", "XMLHttpRequest");
+  if (!headers.has("Content-Type") && init.body) {
+    headers.set("Content-Type", "application/json");
+  }
+
+  if (needsCsrf) {
+    const token = await ensureCsrf();
+    applyCsrfHeaders(headers, token);
+  }
+
+  const res = await fetch(apiUrl(path), {
+    ...init,
+    headers,
+    credentials: "include",
+  });
+
+  if (res.status === 419 && needsCsrf && !retried) {
+    resetCsrf();
+    await ensureCsrf(true);
+    return apiJson<T>(path, init, true);
+  }
+
+  return res.json() as Promise<T>;
+}
+
 
 export async function fetchBootstrap(route: string) {
   const res = await apiFetch(`/api/v1/bootstrap?route=${encodeURIComponent(route)}`);
@@ -176,16 +266,8 @@ export async function addToCart(
   cleaningType: "individual" | "stream",
   quantity = 1,
 ) {
-  await ensureCsrf();
-  const res = await fetch(apiUrl("/api/cart/add"), {
+  const res = await apiFetch("/api/cart/add", {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": xsrfToken(),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    credentials: "include",
     body: JSON.stringify({
       service_id: serviceId,
       quantity,
@@ -193,38 +275,28 @@ export async function addToCart(
     }),
   });
   const data = (await res.json()) as { success: boolean; message?: string; cart_count?: number };
-  if (!res.ok) {
+  if (!data.success) {
     throw new Error(data.message ?? "Не вдалося додати до кошика");
   }
   return data;
 }
 
 export async function submitConsultation(name: string, phone: string, message?: string) {
-  const res = await apiFetch("/api/order/consultation", {
+  return apiJson("/api/order/consultation", {
     method: "POST",
     body: JSON.stringify({ name, phone, message }),
   });
-  return res.json();
 }
 
 export async function submitContact(name: string, phone: string, message?: string) {
-  await ensureCsrf();
-  const res = await fetch(apiUrl("/api/contact"), {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": xsrfToken(),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    credentials: "include",
-    body: JSON.stringify({ name, phone, message: message ?? null }),
-  });
-  return res.json() as Promise<{
+  return apiJson<{
     success?: boolean;
     message?: string;
     errors?: Record<string, string[]>;
-  }>;
+  }>("/api/contact", {
+    method: "POST",
+    body: JSON.stringify({ name, phone, message: message ?? null }),
+  });
 }
 
 export type CourierOrderPayload = {
@@ -238,16 +310,12 @@ export type CourierOrderPayload = {
 };
 
 export async function submitCourierOrder(payload: CourierOrderPayload) {
-  await ensureCsrf();
-  const res = await fetch(apiUrl("/api/courier/request"), {
+  return apiJson<{
+    success?: boolean;
+    message?: string;
+    errors?: Record<string, string[]>;
+  }>("/api/courier/request", {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": xsrfToken(),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    credentials: "include",
     body: JSON.stringify({
       name: payload.name,
       phone: payload.phone,
@@ -258,11 +326,6 @@ export async function submitCourierOrder(payload: CourierOrderPayload) {
       comment: payload.comment?.trim() || null,
     }),
   });
-  return res.json() as Promise<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>;
 }
 
 export type B2bProposalPayload = {
@@ -275,16 +338,12 @@ export type B2bProposalPayload = {
 };
 
 export async function submitB2bProposal(payload: B2bProposalPayload) {
-  await ensureCsrf();
-  const res = await fetch(apiUrl("/api/b2b/proposal"), {
+  return apiJson<{
+    success?: boolean;
+    message?: string;
+    errors?: Record<string, string[]>;
+  }>("/api/b2b/proposal", {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": xsrfToken(),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    credentials: "include",
     body: JSON.stringify({
       company: payload.company,
       name: payload.name,
@@ -294,24 +353,15 @@ export async function submitB2bProposal(payload: B2bProposalPayload) {
       comment: payload.comment?.trim() || null,
     }),
   });
-  return res.json() as Promise<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>;
 }
 
 export async function submitScheduledPopupContact(name: string, phone: string, popupModalId: number) {
-  await ensureCsrf();
-  const res = await fetch(apiUrl("/api/contact"), {
+  return apiJson<{
+    success?: boolean;
+    message?: string;
+    errors?: Record<string, string[]>;
+  }>("/api/contact", {
     method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/json",
-      "X-XSRF-TOKEN": xsrfToken(),
-      "X-Requested-With": "XMLHttpRequest",
-    },
-    credentials: "include",
     body: JSON.stringify({
       name,
       phone,
@@ -319,11 +369,6 @@ export async function submitScheduledPopupContact(name: string, phone: string, p
       popup_modal_id: popupModalId,
     }),
   });
-  return res.json() as Promise<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>;
 }
 
 export async function fetchScheduledPopups() {

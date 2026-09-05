@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import type { BlogPostListItem } from "@/lib/blog";
 import { formatBlogDateCompact, formatBlogDateShort } from "@/lib/blog";
-import { saveBlogListScroll } from "@/lib/blogScroll";
 import { blogPostUrl } from "@/lib/routes";
 
 type Props = {
@@ -10,11 +9,7 @@ type Props = {
 
 export function BlogFeaturedPost({ post }: Props) {
   return (
-    <Link
-      to={blogPostUrl(post.slug)}
-      onClick={saveBlogListScroll}
-      className="blog-featured no-underline group"
-    >
+    <Link to={blogPostUrl(post.slug)} className="blog-featured no-underline group">
       {post.image && (
         <div className="blog-featured__media">
           <img src={post.image} alt="" className="blog-featured__img" />
@@ -37,11 +32,7 @@ export function BlogFeaturedPost({ post }: Props) {
 
 export function BlogListRow({ post }: Props) {
   return (
-    <Link
-      to={blogPostUrl(post.slug)}
-      onClick={saveBlogListScroll}
-      className="blog-row no-underline group"
-    >
+    <Link to={blogPostUrl(post.slug)} className="blog-row no-underline group">
       {post.publishedAt && (
         <time className="blog-row__date">{formatBlogDateCompact(post.publishedAt)}</time>
       )}

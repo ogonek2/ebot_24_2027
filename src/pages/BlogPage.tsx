@@ -1,12 +1,10 @@
-import { useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useMemo } from "react";
 import Breadcrumbs, { homeCrumb } from "@/components/Breadcrumbs";
 import { BlogFeaturedPost, BlogListRow } from "@/components/blog/BlogList";
 import PageSkeleton from "@/components/skeleton/PageSkeleton";
 import { useBootstrap } from "@/context/BootstrapContext";
 import { fetchBlogAllCached } from "@/lib/api";
 import type { BlogPostListItem } from "@/lib/blog";
-import { consumeBlogListScroll } from "@/lib/blogScroll";
 import { useCachedQuery } from "@/lib/useCachedQuery";
 
 export default function BlogPage() {
@@ -21,16 +19,6 @@ export default function BlogPage() {
   const [featured, ...rest] = posts;
   const showSkeleton = loading && posts.length === 0;
   const showEmpty = !loading && posts.length === 0;
-
-  useEffect(() => {
-    if (showSkeleton) return;
-    const y = consumeBlogListScroll();
-    if (y === null) return;
-
-    const restore = () => window.scrollTo(0, y);
-    restore();
-    requestAnimationFrame(restore);
-  }, [showSkeleton, posts.length]);
 
   if (showSkeleton) {
     return <PageSkeleton cards={6} />;

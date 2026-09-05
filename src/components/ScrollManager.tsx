@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
-import { clearBlogListScroll } from "@/lib/blogScroll";
-import { ROUTES } from "@/lib/routes";
-
-function isBlogPostPath(pathname: string) {
-  return pathname.startsWith("/blog/") && pathname !== ROUTES.blog;
-}
+import { useLocation, useNavigationType } from "react-router-dom";
+import {
+  getScrollPosition,
+  restoreScrollPosition,
+  saveScrollPosition,
+  scrollToTopInstant,
+} from "@/lib/scrollRestore";
 
 function scrollToHash(hash: string) {
   const id = hash.replace(/^#/, "");
@@ -15,9 +15,14 @@ function scrollToHash(hash: string) {
   });
 }
 
+/**
+ * Remembers window scroll per history entry and restores it on browser Back/Forward.
+ * Fresh navigations (link clicks) still start at the top.
+ */
 export default function ScrollManager() {
   const location = useLocation();
-  const prevPathRef = useRef(location.pathname);
+  const navigationType = useNavigationType();
+  const activeKeyRef = useRef(location.key);
 
   useEffect(() => {
     if ("scrollRestoration" in history) {
@@ -25,35 +30,38 @@ export default function ScrollManager() {
     }
   }, []);
 
+  // Keep the current history entry's scroll fresh while the user moves.
+  useEffect(() => {
+    activeKeyRef.current = location.key;
+
+    const onScroll = () => {
+      saveScrollPosition(activeKeyRef.current, window.scrollY);
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [location.key]);
+
   useLayoutEffect(() => {
-    const prev = prevPathRef.current;
-    const curr = location.pathname;
-    prevPathRef.current = curr;
+    const prevKey = activeKeyRef.current;
+    if (prevKey && prevKey !== location.key) {
+      saveScrollPosition(prevKey, window.scrollY);
+    }
+    activeKeyRef.current = location.key;
 
     if (location.hash) {
       scrollToHash(location.hash);
       return;
     }
 
-    const enteringBlogList = curr === ROUTES.blog;
-    const leavingBlogListForPost = prev === ROUTES.blog && isBlogPostPath(curr);
-    const returningToBlogList = enteringBlogList && isBlogPostPath(prev);
-
-    if (returningToBlogList) {
-      return;
+    if (navigationType === "POP") {
+      const y = getScrollPosition(location.key) ?? 0;
+      return restoreScrollPosition(y);
     }
 
-    if (leavingBlogListForPost || isBlogPostPath(curr)) {
-      window.scrollTo(0, 0);
-      return;
-    }
-
-    if (enteringBlogList) {
-      clearBlogListScroll();
-    }
-
-    window.scrollTo(0, 0);
-  }, [location.pathname, location.hash, location.key]);
+    scrollToTopInstant();
+    saveScrollPosition(location.key, 0);
+  }, [location.key, location.pathname, location.search, location.hash, navigationType]);
 
   return null;
 }

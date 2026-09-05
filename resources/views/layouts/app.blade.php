@@ -16,9 +16,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Russo+One&display=swap" rel="stylesheet">
-    {{-- CSS Styles compiled via Mix --}}
-    {{-- Tailwind CSS - используем скомпилированный через Mix (не в manifest, поэтому asset) --}}
-    <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
+    {{-- Styles: SPA uses Vite bundle; legacy pages use Mix tailwind --}}
+    @if(!empty($spa))
+        @vite(['resources/spa/main.tsx'])
+        <link rel="manifest" href="{{ asset('manifest.webmanifest') }}">
+        <meta name="theme-color" content="#FF2D6A">
+    @else
+        <link rel="stylesheet" href="{{ asset('css/tailwind.css') }}">
+    @endif
     {{-- SwiperJs CDN --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css">
     {{-- Font Awesome --}}
@@ -604,7 +609,7 @@
     <!-- End Google Tag Manager (noscript) -->
 </head>
 
-<body>
+<body class="{{ !empty($spa) ? 'enot-spa' : '' }}">
     @if(request()->routeIs('welcome') && config('seo.show_page_loader', true))
     {{-- Page Loader (тільки головна; не блокує LCP на послугах і блозі) --}}
     <div id="page-loader">
@@ -649,18 +654,7 @@
     <div id="app">
         @include('includes.windows.feedback_form-fd')
         @include('includes.windows.success-modal')
-        <div class="app-container px-0 md:px-6">
-            <div class="app-container-navigator">
-                @include('includes.fixed.navigator')
-            </div>
-            <div class="app-container-elements">
-                @yield('content')
-            </div>
-        </div>
-        <div class="app-container-footer">
-            @include('includes.fixed.footer')
-        </div>
-        {{-- Vue компоненты монтируются точечно через кастомные теги --}}
+        @yield('content')
         <vue-cart-container></vue-cart-container>
     </div>
 

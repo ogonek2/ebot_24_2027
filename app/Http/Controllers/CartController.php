@@ -322,6 +322,25 @@ class CartController extends Controller
     }
 
     /**
+     * Отримати останнє замовлення з сесії (для SPA)
+     */
+    public function getLastOrder(Request $request)
+    {
+        $order = session('last_order');
+
+        if (!$order) {
+            return response()->json(['order' => null], 404);
+        }
+
+        $orderId = $request->query('order_id');
+        if ($orderId && ($order['id'] ?? null) !== $orderId) {
+            return response()->json(['order' => null], 404);
+        }
+
+        return response()->json(['order' => $order]);
+    }
+
+    /**
      * Страница оформления заказа
      */
     public function checkout()

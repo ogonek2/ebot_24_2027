@@ -17,6 +17,113 @@ use Illuminate\Support\Facades\Validator;
 
 class FeedbackController extends Controller
 {
+    public function submitCourierOrder(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:30',
+            'type' => 'required|in:courier,pickup',
+            'address' => 'nullable|required_if:type,courier|string|max:500',
+            'date' => 'nullable|string|max:20',
+            'time' => 'nullable|string|max:50',
+            'comment' => 'nullable|string|max:2000',
+        ], [
+            'name.required' => 'Ім\'я є обов\'язковим полем',
+            'name.max' => 'Ім\'я не може перевищувати 255 символів',
+            'phone.required' => 'Номер телефону є обов\'язковим полем',
+            'phone.max' => 'Номер телефону не може перевищувати 30 символів',
+            'type.required' => 'Оберіть спосіб отримання',
+            'type.in' => 'Невірний спосіб отримання',
+            'address.required_if' => 'Адреса забору є обов\'язковою для кур\'єра',
+            'address.max' => 'Адреса не може перевищувати 500 символів',
+            'date.max' => 'Невірний формат дати',
+            'time.max' => 'Невірний формат часу',
+            'comment.max' => 'Коментар не може перевищувати 2000 символів',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $this->sendCourierTelegramNotification(
+                $request->name,
+                $request->phone,
+                $request->type,
+                $request->address,
+                $request->date,
+                $request->time,
+                $request->comment
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Дякуємо! Ми зв\'яжемося з вами протягом 30 хвилин.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Виникла помилка при відправці повідомлення. Спробуйте пізніше.',
+            ], 500);
+        }
+    }
+
+    public function submitB2bProposal(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'company' => 'required|string|max:255',
+            'name' => 'required|string|max:255',
+            'phone' => 'required|string|max:30',
+            'email' => 'required|email|max:255',
+            'volume' => 'required|string|max:100',
+            'comment' => 'nullable|string|max:2000',
+        ], [
+            'company.required' => 'Назва компанії є обов\'язковим полем',
+            'company.max' => 'Назва компанії не може перевищувати 255 символів',
+            'name.required' => 'Ім\'я є обов\'язковим полем',
+            'name.max' => 'Ім\'я не може перевищувати 255 символів',
+            'phone.required' => 'Номер телефону є обов\'язковим полем',
+            'phone.max' => 'Номер телефону не може перевищувати 30 символів',
+            'email.required' => 'Email є обов\'язковим полем',
+            'email.email' => 'Введіть коректний email',
+            'email.max' => 'Email не може перевищувати 255 символів',
+            'volume.required' => 'Оберіть приблизний обсяг',
+            'volume.max' => 'Значення обсягу занадто довге',
+            'comment.max' => 'Коментар не може перевищувати 2000 символів',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        try {
+            $this->sendB2bTelegramNotification(
+                $request->company,
+                $request->name,
+                $request->phone,
+                $request->email,
+                $request->volume,
+                $request->comment
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Дякуємо! Наш менеджер зв\'яжеться з вами протягом 2 годин.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Виникла помилка при відправці повідомлення. Спробуйте пізніше.',
+            ], 500);
+        }
+    }
+
     public function submit(Request $request)
     {
         if ($request->input('popup_modal_id') === '' || $request->input('popup_modal_id') === null) {
@@ -166,6 +273,147 @@ class FeedbackController extends Controller
             throw new \Exception('Failed to send Telegram notification: ' . $curlError);
         }
         
+        return $result;
+    }
+
+    /**
+     * Send B2B corporate proposal notification to Telegram
+     */
+    private function sendB2bTelegramNotification(
+        $company,
+        $name,
+        $phone,
+        $email,
+        $volume,
+        $comment = null
+    ) {
+        if (!config('telegram.enabled', true)) {
+            return;
+        }
+
+        $botToken = config('telegram.bot_token');
+        $chatId = config('telegram.chat_id');
+
+        $text = "🏢 *Корпоративна заявка B2B*\n\n";
+        $text .= "🏭 *Компанія:* " . $company . "\n";
+        $text .= "👤 *Контакт:* " . $name . "\n";
+        $text .= "📞 *Телефон:* " . $phone . "\n";
+        $text .= "✉️ *Email:* " . $email . "\n";
+        $text .= "📊 *Обсяг на місяць:* " . $volume . "\n";
+
+        if (!empty($comment)) {
+            $text .= "💬 *Коментар:* " . $comment . "\n";
+        }
+
+        $text .= "\n⏰ *Час:* " . now()->format('d.m.Y H:i:s');
+
+        $data = [
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'Markdown',
+        ];
+
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            \Log::error('Telegram B2B notification failed', [
+                'http_code' => $httpCode,
+                'curl_error' => $curlError,
+                'response' => $result,
+            ]);
+            throw new \Exception('Failed to send Telegram notification: ' . $curlError);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Send courier / pickup order notification to Telegram
+     */
+    private function sendCourierTelegramNotification(
+        $name,
+        $phone,
+        $type,
+        $address = null,
+        $date = null,
+        $time = null,
+        $comment = null
+    ) {
+        if (!config('telegram.enabled', true)) {
+            return;
+        }
+
+        $botToken = config('telegram.bot_token');
+        $chatId = config('telegram.chat_id');
+
+        $typeLabel = $type === 'courier' ? "Кур'єр до дверей" : 'Самовивіз';
+
+        $text = "🚚 *Заявка на хімчистку*\n\n";
+        $text .= "👤 *Ім'я:* " . $name . "\n";
+        $text .= "📞 *Телефон:* " . $phone . "\n";
+        $text .= "📦 *Спосіб:* " . $typeLabel . "\n";
+
+        if (!empty($address)) {
+            $text .= "📍 *Адреса:* " . $address . "\n";
+        }
+
+        if (!empty($date)) {
+            $text .= "📅 *Дата:* " . $date . "\n";
+        }
+
+        if (!empty($time)) {
+            $text .= "🕐 *Час:* " . $time . "\n";
+        }
+
+        if (!empty($comment)) {
+            $text .= "💬 *Коментар:* " . $comment . "\n";
+        }
+
+        $text .= "\n⏰ *Час заявки:* " . now()->format('d.m.Y H:i:s');
+
+        $data = [
+            'chat_id' => $chatId,
+            'text' => $text,
+            'parse_mode' => 'Markdown',
+        ];
+
+        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_POST, 1);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            \Log::error('Telegram courier notification failed', [
+                'http_code' => $httpCode,
+                'curl_error' => $curlError,
+                'response' => $result,
+            ]);
+            throw new \Exception('Failed to send Telegram notification: ' . $curlError);
+        }
+
         return $result;
     }
 }

@@ -11,6 +11,7 @@ use App\Models\discount;
 use App\Models\locations;
 use App\Models\cities;
 use App\Models\BlogPost;
+use App\Services\SpaBootstrap;
 
 class IndexServices extends Controller
 {
@@ -68,6 +69,8 @@ class IndexServices extends Controller
             ->get();
 
         return view('welcome', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::forHome(),
             'categories' => $categories,
             'discounts' => $discounts,
             'branches' => $branches,
@@ -98,6 +101,8 @@ class IndexServices extends Controller
         ->get();
 
         return view('poslugi', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::forServices(),
             'categories' => $categories,
         ]);
     }
@@ -106,7 +111,9 @@ class IndexServices extends Controller
         $getB2bItems = B2b::all();
 
         return view('for-business', [
-            'b2b_data' => $getB2bItems
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::catalog('/dlya-biznesu'),
+            'b2b_data' => $getB2bItems,
         ]);
     }
     public function b2bShow($page)
@@ -117,7 +124,10 @@ class IndexServices extends Controller
     }
     public function courier()
     {
-        return view('courier');
+        return view('courier', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::catalog('/viklikati-kuryera'),
+        ]);
     }
     public function delivery()
     {
@@ -148,6 +158,11 @@ class IndexServices extends Controller
         $selectedLocationId = $request->get('location');
 
         return view('locations', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::catalog('/lokatsii', [
+                'branches' => SpaBootstrap::serializeBranches(),
+                'locationCities' => SpaBootstrap::serializeLocationCities(),
+            ]),
             'cities' => $cities,
             'selectedLocationId' => $selectedLocationId,
         ]);
@@ -279,6 +294,14 @@ class IndexServices extends Controller
         }
         
         return view('service', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::catalog(
+                '/poslugi-ta-cini/' . ($primaryCategory->href ?? $category) . '/posluga/' . ($serviceModel->transform_url ?? $service),
+                [
+                    'serviceHref' => $serviceModel->transform_url ?? $service,
+                    'categoryHref' => $primaryCategory->href ?? $category,
+                ]
+            ),
             'service' => $serviceModel,
             'primaryCategory' => $primaryCategory,
             'otherServices' => $otherServices,
@@ -314,6 +337,10 @@ class IndexServices extends Controller
             ->get();
 
         return view('category', [
+            'spa' => true,
+            'spaBootstrap' => SpaBootstrap::catalog('/poslugi-ta-cini/' . $activeCategory->href, [
+                'activeCategory' => $activeCategory->href,
+            ]),
             'category' => $activeCategory,
             'otherCategories' => $otherCategories,
         ]);

@@ -45,6 +45,14 @@ Route::post('/b2b/proposal', [App\Http\Controllers\FeedbackController::class, 's
 Route::post('/courier/request', [App\Http\Controllers\FeedbackController::class, 'submitCourierOrder']);
 
 /*
+| SPA CSRF: plain token for X-CSRF-TOKEN (after GET /sanctum/csrf-cookie).
+| Session comes from Sanctum EnsureFrontendRequestsAreStateful when Origin is stateful.
+*/
+Route::get('/csrf-token', function () {
+    return response()->json(['token' => csrf_token()]);
+});
+
+/*
 |--------------------------------------------------------------------------
 | Session API (cart, orders) — cookies + CSRF via Sanctum stateful
 |--------------------------------------------------------------------------

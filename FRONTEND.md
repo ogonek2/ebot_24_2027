@@ -1,33 +1,15 @@
-# Frontend ↔ Backend
+# Backend (API + admin)
 
-Репозиторий: https://github.com/ogonek2/ebot_24_2027.git
+Публичный React-сайт живёт в ветке **`main`** репозитория  
+https://github.com/ogonek2/ebot_24_2027.git и хостится отдельно.
 
-| Branch | Path (локально) | Хост (тест) |
-|--------|-----------------|-------------|
-| `main` | `frontend/` | https://enot.qpanel-erp.online |
-| `api` | Laravel root | https://enot-api.qpanel-erp.online |
+Этот Laravel-проект (ветка **`api`**) отдаёт:
 
-Подробнее: [DEPLOY.md](./DEPLOY.md).
+- JSON API (`/api/...`)
+- Filament admin (`/admin`)
+- Copywriter dashboard (`/dashboard/copywriter`)
+- Sitemap / blog RSS (URL страниц указывают на `SEO_SITE_URL`)
 
-## Development
+Корень `/` → редирект на `/admin`.
 
-```bash
-# Terminal 1 — API
-php artisan serve
-
-# Terminal 2 — SPA
-cd ../frontend   # или отдельный clone main
-npm install && npm run dev
-```
-
-`VITE_API_PROXY` в `frontend/.env` → Laravel.
-
-## Production build (SPA)
-
-```bash
-cd frontend
-npm run build          # → dist/  (для enot.qpanel-erp.online)
-# npm run build:laravel  # опционально → public/build/
-```
-
-API URL задаётся в `frontend/.env.production` (`VITE_API_URL`).
+См. [DEPLOY.md](./DEPLOY.md).

@@ -3,9 +3,9 @@
 Репозиторий: https://github.com/ogonek2/ebot_24_2027.git  
 Ветка: **`api`**  
 Тест: **https://enot-api.qpanel-erp.online**  
-Фронт (отдельный хост): **https://enot.qpanel-erp.online** (`main`)
+Публичный сайт: **https://enot.qpanel-erp.online** (`main`)
 
-Полная инструкция и таблица URL: см. `DEPLOY.md` в ветке `main` (frontend) или раздел ниже.
+Этот хост — **только API + админка**. Открытие `/` редиректит на `/admin` (Filament).
 
 ---
 
@@ -13,15 +13,15 @@
 
 Файл **`.env` на сервере** (не коммитится). Ориентир — `.env.example`.
 
-| Ключ | Сейчас (TEST) | На PROD |
-|------|---------------|---------|
-| `APP_URL` | `https://enot-api.qpanel-erp.online` | прод-URL API |
-| `FRONTEND_URL` | `https://enot.qpanel-erp.online` | прод-URL SPA |
-| `SEO_SITE_URL` | `https://enot.qpanel-erp.online` | канонический сайт |
+| Ключ | TEST | PROD |
+|------|------|------|
+| `APP_URL` | `https://enot-api.qpanel-erp.online` | URL API |
+| `FRONTEND_URL` | `https://enot.qpanel-erp.online` | URL SPA |
+| `SEO_SITE_URL` | `https://enot.qpanel-erp.online` | канонический сайт (sitemap/SEO) |
 | `CORS_ALLOWED_ORIGINS` | origin SPA | origin прод-SPA |
-| `SANCTUM_STATEFUL_DOMAINS` | `enot.qpanel-erp.online` | хост прод-SPA |
+| `SANCTUM_STATEFUL_DOMAINS` | `enot.qpanel-erp.online` | хост SPA |
 | `SESSION_DOMAIN` | `.qpanel-erp.online` | `null` или `.ваш-домен` |
-| `SESSION_SAME_SITE` | `none` (кросс-поддомен) | `lax` если один сайт |
+| `SESSION_SAME_SITE` | `none` | `lax` если один сайт |
 | `SESSION_SECURE_COOKIE` | `true` | `true` |
 
 После правок: `php artisan config:clear && php artisan config:cache`.
@@ -42,3 +42,7 @@ php artisan route:cache
 ```
 
 Document root = `public/`.
+
+Админка: `https://enot-api.qpanel-erp.online/admin`  
+Копирайтер-дашборд: `/dashboard/copywriter`  
+JSON API: `/api/...`

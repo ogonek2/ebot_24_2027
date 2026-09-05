@@ -341,48 +341,6 @@ class CartController extends Controller
     }
 
     /**
-     * Страница оформления заказа
-     */
-    public function checkout()
-    {
-        $cart = session('cart', []);
-        
-        if (empty($cart)) {
-            return redirect()->route('services')->with('message', 'Ваша корзина порожня');
-        }
-
-        $locations = locations::with('cityRelation')
-            ->orderBy('city')
-            ->orderBy('street')
-            ->get();
-
-        return view('checkout', [
-            'locations' => $locations,
-        ]);
-    }
-
-    /**
-     * Страница благодарности с инвойсом
-     */
-    public function orderSuccess($orderId = null)
-    {
-        $order = session('last_order');
-
-        if (!$order) {
-            return redirect()->route('services')->with('message', 'Замовлення не знайдено');
-        }
-
-        // Если передан orderId, проверяем совпадение
-        if ($orderId && $order['id'] !== $orderId) {
-            return redirect()->route('services')->with('message', 'Замовлення не знайдено');
-        }
-
-        return view('order-success', [
-            'order' => $order,
-        ]);
-    }
-
-    /**
      * Скачать инвойс в PDF
      */
     public function downloadInvoice($orderId)

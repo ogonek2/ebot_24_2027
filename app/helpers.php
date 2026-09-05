@@ -22,6 +22,21 @@ if (!function_exists('seo_site_url')) {
     }
 }
 
+if (!function_exists('frontend_url')) {
+    /**
+     * Absolute URL on the public SPA host (SEO_SITE_URL / FRONTEND_URL).
+     */
+    function frontend_url(string $path = '/'): string
+    {
+        $base = seo_site_url();
+        if ($path === '' || $path === '/') {
+            return $base . '/';
+        }
+
+        return $base . '/' . ltrim($path, '/');
+    }
+}
+
 if (!function_exists('seo_canonical')) {
     function seo_canonical(?string $url = null): string
     {

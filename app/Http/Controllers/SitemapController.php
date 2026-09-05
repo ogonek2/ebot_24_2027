@@ -15,10 +15,10 @@ class SitemapController extends Controller
     {
         $xml = view('sitemaps.index', [
             'sitemaps' => [
-                ['loc' => route('sitemap.pages'), 'lastmod' => now()],
-                ['loc' => route('sitemap.categories'), 'lastmod' => $this->latestCategoryModifiedAt()],
-                ['loc' => route('sitemap.services'), 'lastmod' => $this->latestServiceModifiedAt()],
-                ['loc' => route('sitemap.posts'), 'lastmod' => $this->latestPostModifiedAt()],
+                ['loc' => url('/sitemap-pages.xml'), 'lastmod' => now()],
+                ['loc' => url('/sitemap-categories.xml'), 'lastmod' => $this->latestCategoryModifiedAt()],
+                ['loc' => url('/sitemap-services.xml'), 'lastmod' => $this->latestServiceModifiedAt()],
+                ['loc' => url('/sitemap-posts.xml'), 'lastmod' => $this->latestPostModifiedAt()],
             ],
         ])->render();
 
@@ -30,19 +30,19 @@ class SitemapController extends Controller
         $latestPostDate = $this->latestPostModifiedAt();
 
         $pages = [
-            ['loc' => route('welcome'), 'changefreq' => 'daily', 'priority' => '1.0', 'lastmod' => null],
-            ['loc' => route('services'), 'changefreq' => 'weekly', 'priority' => '0.9', 'lastmod' => null],
-            ['loc' => route('blog.index'), 'changefreq' => 'daily', 'priority' => '0.9', 'lastmod' => $latestPostDate],
-            ['loc' => route('blog.feed'), 'changefreq' => 'daily', 'priority' => '0.5', 'lastmod' => $latestPostDate],
-            ['loc' => route('promotions'), 'changefreq' => 'daily', 'priority' => '0.8', 'lastmod' => null],
-            ['loc' => route('contacts_page'), 'changefreq' => 'monthly', 'priority' => '0.6', 'lastmod' => null],
-            ['loc' => route('delivery_page'), 'changefreq' => 'monthly', 'priority' => '0.6', 'lastmod' => null],
-            ['loc' => route('courier_page'), 'changefreq' => 'monthly', 'priority' => '0.7', 'lastmod' => null],
-            ['loc' => route('locations_page'), 'changefreq' => 'monthly', 'priority' => '0.7', 'lastmod' => null],
-            ['loc' => route('b2b_page'), 'changefreq' => 'weekly', 'priority' => '0.8', 'lastmod' => null],
-            ['loc' => route('oferta'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
-            ['loc' => route('privacy_policy'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
-            ['loc' => route('umovy'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
+            ['loc' => frontend_url('/'), 'changefreq' => 'daily', 'priority' => '1.0', 'lastmod' => null],
+            ['loc' => frontend_url('/poslugi-ta-cini'), 'changefreq' => 'weekly', 'priority' => '0.9', 'lastmod' => null],
+            ['loc' => frontend_url('/blog'), 'changefreq' => 'daily', 'priority' => '0.9', 'lastmod' => $latestPostDate],
+            ['loc' => url('/blog/feed.xml'), 'changefreq' => 'daily', 'priority' => '0.5', 'lastmod' => $latestPostDate],
+            ['loc' => frontend_url('/aktsii'), 'changefreq' => 'daily', 'priority' => '0.8', 'lastmod' => null],
+            ['loc' => frontend_url('/kontakty'), 'changefreq' => 'monthly', 'priority' => '0.6', 'lastmod' => null],
+            ['loc' => frontend_url('/dostavka'), 'changefreq' => 'monthly', 'priority' => '0.6', 'lastmod' => null],
+            ['loc' => frontend_url('/viklikati-kuryera'), 'changefreq' => 'monthly', 'priority' => '0.7', 'lastmod' => null],
+            ['loc' => frontend_url('/lokatsii'), 'changefreq' => 'monthly', 'priority' => '0.7', 'lastmod' => null],
+            ['loc' => frontend_url('/dlya-biznesu'), 'changefreq' => 'weekly', 'priority' => '0.8', 'lastmod' => null],
+            ['loc' => frontend_url('/oferta'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
+            ['loc' => frontend_url('/privacy-policy'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
+            ['loc' => frontend_url('/umovy'), 'changefreq' => 'yearly', 'priority' => '0.3', 'lastmod' => null],
         ];
 
         $promotions = Cache::remember('sitemap.promotions', now()->addHour(), function () {
@@ -51,7 +51,7 @@ class SitemapController extends Controller
 
         foreach ($promotions as $promotion) {
             $pages[] = [
-                'loc' => route('promotion_page', $promotion->id),
+                'loc' => frontend_url('/aktsii/' . $promotion->id),
                 'changefreq' => 'weekly',
                 'priority' => '0.7',
                 'lastmod' => null,
@@ -74,7 +74,7 @@ class SitemapController extends Controller
                 ->get(['href', 'updated_at'])
                 ->map(function (Category $category) {
                     return [
-                        'loc' => route('category_page', $category->href),
+                        'loc' => frontend_url('/poslugi-ta-cini/' . $category->href),
                         'lastmod' => $category->updated_at,
                         'changefreq' => 'weekly',
                         'priority' => '0.85',
@@ -105,7 +105,7 @@ class SitemapController extends Controller
                         }
 
                         $items[] = [
-                            'loc' => route('service_page', [$category->href, $service->transform_url]),
+                            'loc' => frontend_url('/poslugi-ta-cini/' . $category->href . '/posluga/' . $service->transform_url),
                             'lastmod' => $service->updated_at,
                             'changefreq' => 'weekly',
                             'priority' => '0.8',
@@ -132,7 +132,7 @@ class SitemapController extends Controller
 
         $urls = $posts->map(function (BlogPost $post) {
             return [
-                'loc' => route('blog.show', $post->slug),
+                'loc' => frontend_url('/blog/' . $post->slug),
                 'lastmod' => $post->updated_at ?? $post->published_at,
                 'changefreq' => 'weekly',
                 'priority' => '0.8',

@@ -21,7 +21,7 @@ export default function LocationsSection() {
     <section className="py-16 sm:py-20">
       <div className="site-container">
         <div className="grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
-          <div className="sticky top-[100px]">
+          <div className="lg:sticky lg:top-[100px]">
             <div className="tag-badge mb-4 w-fit">Де ми є</div>
             <h2 className="text-section text-[#1A1A2E] mb-4">
               Пункти прийому
@@ -40,9 +40,10 @@ export default function LocationsSection() {
                   <CategoryIcon name="delivery" size={36} alt="Кур'єр" fallback />
                 </div>
                 <div>
-                  <h3 className="font-black text-[18px] mb-1">Безкоштовний кур&apos;єр</h3>
+                  <h3 className="font-black text-[18px] mb-1">
+                  Доставка в обидві сторони</h3>
                   <p className="text-white/80 text-[13px] mb-4">
-                    Приїдемо у зручний час. Повернення безкоштовне від 500 грн.
+                    Вартість доставки по Києву від 400 грн.
                   </p>
                   <button
                     onClick={goOrder}

@@ -23,33 +23,38 @@ export default function BlogRelatedSwiper() {
     <div className="blog-related-swiper">
       <h2 className="blog-related__title">Читайте також</h2>
 
-      <Swiper
-        modules={[Pagination, Autoplay]}
-        slidesPerView={1}
-        spaceBetween={12}
-        pagination={{ clickable: true }}
-        autoplay={{ delay: 5000, disableOnInteraction: true, pauseOnMouseEnter: true }}
-        className="blog-related-swiper__slider"
-      >
-        {posts.map((post) => (
-          <SwiperSlide key={post.slug}>
-            <Link to={blogPostUrl(post.slug)} className="blog-related-swiper__card no-underline group">
-              {post.image && (
-                <div className="blog-related-swiper__media">
-                  <img src={post.image} alt="" className="blog-related-swiper__img" loading="lazy" />
-                </div>
-              )}
-              <div className="blog-related-swiper__body">
-                {post.publishedAt && (
-                  <time className="blog-related-swiper__date">{formatBlogDateShort(post.publishedAt)}</time>
+      <div className="blog-related-swiper__viewport">
+        <Swiper
+          modules={[Pagination, Autoplay]}
+          slidesPerView={1}
+          spaceBetween={12}
+          watchOverflow
+          observer
+          observeParents
+          pagination={{ clickable: true }}
+          autoplay={{ delay: 5000, disableOnInteraction: true, pauseOnMouseEnter: true }}
+          className="blog-related-swiper__slider"
+        >
+          {posts.map((post) => (
+            <SwiperSlide key={post.slug} className="blog-related-swiper__slide">
+              <Link to={blogPostUrl(post.slug)} className="blog-related-swiper__card no-underline group">
+                {post.image && (
+                  <div className="blog-related-swiper__media">
+                    <img src={post.image} alt="" className="blog-related-swiper__img" loading="lazy" />
+                  </div>
                 )}
-                <h3 className="blog-related-swiper__title">{post.title}</h3>
-                {post.excerpt && <p className="blog-related-swiper__excerpt">{post.excerpt}</p>}
-              </div>
-            </Link>
-          </SwiperSlide>
-        ))}
-      </Swiper>
+                <div className="blog-related-swiper__body">
+                  {post.publishedAt && (
+                    <time className="blog-related-swiper__date">{formatBlogDateShort(post.publishedAt)}</time>
+                  )}
+                  <h3 className="blog-related-swiper__title">{post.title}</h3>
+                  {post.excerpt && <p className="blog-related-swiper__excerpt">{post.excerpt}</p>}
+                </div>
+              </Link>
+            </SwiperSlide>
+          ))}
+        </Swiper>
+      </div>
 
       <Link to={ROUTES.blog} className="blog-related__more no-underline">
         Усі матеріали →

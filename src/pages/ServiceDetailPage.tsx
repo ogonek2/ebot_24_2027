@@ -105,8 +105,8 @@ function ServiceDetailContent({ category, service }: { category: string; service
           items={buildServiceBreadcrumbItems(bootstrap.categories, detail, category)}
         />
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <article className="blog-article font-reading">
+        <div className="blog-post-layout flex flex-col lg:flex-row gap-8">
+          <article className="blog-article font-reading min-w-0">
             <p className="blog-article__eyebrow">«{categoryTitle}»</p>
             <h1 className="blog-article__title">{detail.name}</h1>
             {detail.excerpt && <p className="blog-article__lead">{detail.excerpt}</p>}
@@ -183,11 +183,11 @@ function ServiceDetailContent({ category, service }: { category: string; service
             )}
           </article>
 
-          <aside className="blog-related">
+          <aside className="blog-related min-w-0">
             {relatedServices.length > 0 && (
               <>
                 <h2 className="blog-related__title">Інші послуги</h2>
-                <ol className="flex flex-wrap gap-2 list-disc list-inside">
+                <ul className="blog-related__list">
                   {relatedServices.map((item) => (
                     <li key={`${item.categoryHref}-${item.href}`}>
                       <Link
@@ -199,7 +199,7 @@ function ServiceDetailContent({ category, service }: { category: string; service
                       {item.price && <span className="blog-related__meta">{item.price}</span>}
                     </li>
                   ))}
-                </ol>
+                </ul>
               </>
             )}
 

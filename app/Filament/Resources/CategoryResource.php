@@ -77,7 +77,8 @@ class CategoryResource extends Resource
                             ->disk('public')
                             ->visibility('public')
                             ->nullable()
-                            ->helperText('Зображення для відображення в категорії'),
+                            ->helperText('Зображення для відображення в категорії')
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                     ])
                     ->columns(2),
                 
@@ -107,7 +108,7 @@ class CategoryResource extends Resource
                         Forms\Components\TextInput::make('meta_keywords')->label('Meta keywords')->maxLength(255),
                         Forms\Components\TextInput::make('og_title')->label('OG title')->maxLength(70),
                         Forms\Components\Textarea::make('og_description')->label('OG description')->rows(2),
-                        Forms\Components\FileUpload::make('og_image')->label('OG image')->image()->directory('src/seo/categories')->disk('public'),
+                        Forms\Components\FileUpload::make('og_image')->label('OG image')->image()->directory('src/seo/categories')->disk('public')->visibility('public')->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                         Forms\Components\TextInput::make('robots')->label('Robots')->placeholder('index, follow'),
                         Forms\Components\TextInput::make('canonical_path')->label('Canonical path')->placeholder('/poslugi/kategoriya'),
                     ])

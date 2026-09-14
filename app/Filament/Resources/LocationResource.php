@@ -105,13 +105,7 @@ class LocationResource extends Resource
                             ->disk('public')
                             ->visibility('public')
                             ->nullable()
-                            ->getUploadedFileUrlUsing(function ($file) {
-                                if (!$file) {
-                                    return null;
-                                }
-                                // Формируем правильный URL: storage/src/locations_image/filename.png
-                                return asset('storage/' . $file);
-                            }),
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                         Forms\Components\Textarea::make('value')
                             ->label('Додаткова інформація')
                             ->rows(4)
@@ -140,7 +134,7 @@ class LocationResource extends Resource
                     ->label('Район')
                     ->searchable()
                     ->toggleable()
-                    ->placeholder('—'),
+                    ->formatStateUsing(fn ($state) => filled($state) ? $state : '—'),
                 Tables\Columns\TextColumn::make('cityRelation.city')
                     ->label('Місто')
                     ->searchable()

@@ -48,10 +48,20 @@ class PromotionResource extends Resource
                             ->columnSpanFull(),
                         
                         Forms\Components\TextInput::make('discount_action')
-                            ->label('Дія знижки')
+                            ->label('Дія знижки (лейбл)')
                             ->maxLength(255)
-                            ->helperText('Наприклад: "До -35%"')
+                            ->helperText('Наприклад: "До -35%" — показується на картці')
                             ->nullable(),
+
+                        Forms\Components\TextInput::make('discount_percent')
+                            ->label('Відсоток знижки акції')
+                            ->numeric()
+                            ->minValue(1)
+                            ->maxValue(100)
+                            ->suffix('%')
+                            ->nullable()
+                            ->helperText('Для режиму «однакова знижка всім»')
+                            ->reactive(),
                         
                         Forms\Components\TextInput::make('locations')
                             ->label('Локації')
@@ -103,13 +113,7 @@ class PromotionResource extends Resource
                             ->visibility('public')
                             ->nullable()
                             ->helperText('Зображення для відображення акції')
-                            ->getUploadedFileUrlUsing(function ($file) {
-                                if (!$file) {
-                                    return null;
-                                }
-                                // Формируем правильный URL: storage/src/stock_images/filename.png
-                                return asset('storage/' . $file);
-                            }),
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                         
                         Forms\Components\TextInput::make('color')
                             ->label('Колір фону акції')
@@ -131,6 +135,54 @@ class PromotionResource extends Resource
                             ->nullable(),
                     ])
                     ->columns(3),
+
+                Forms\Components\Section::make('Послуги акції')
+                    ->description('Оберіть послуги та режим застосування знижки. Зміни sale-цін запишуться при збереженні.')
+                    ->schema([
+                        Forms\Components\Radio::make('promo_attach_mode')
+                            ->label('Режим знижки для послуг')
+                            ->options([
+                                'shared' => '1 — Однакова знижка всім (з поля «Відсоток знижки акції»)',
+                                'custom' => '2 — Різні знижки під цю акцію',
+                                'none' => '3 — Лише показати послуги, без зміни цін',
+                            ])
+                            ->default('shared')
+                            ->reactive()
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Select::make('promo_service_ids')
+                            ->label('Послуги')
+                            ->multiple()
+                            ->searchable()
+                            ->options(fn () => \App\Models\Service::query()->orderBy('name')->pluck('name', 'id'))
+                            ->visible(fn ($get) => in_array($get('promo_attach_mode'), ['shared', 'none'], true))
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+
+                        Forms\Components\Repeater::make('promo_custom_rows')
+                            ->label('Послуги з індивідуальним %')
+                            ->schema([
+                                Forms\Components\Select::make('service_id')
+                                    ->label('Послуга')
+                                    ->searchable()
+                                    ->required()
+                                    ->options(fn () => \App\Models\Service::query()->orderBy('name')->pluck('name', 'id'))
+                                    ->columnSpan(2),
+                                Forms\Components\TextInput::make('custom_percent')
+                                    ->label('%')
+                                    ->numeric()
+                                    ->minValue(1)
+                                    ->maxValue(100)
+                                    ->required()
+                                    ->suffix('%'),
+                            ])
+                            ->columns(3)
+                            ->defaultItems(0)
+                            ->visible(fn ($get) => $get('promo_attach_mode') === 'custom')
+                            ->dehydrated(false)
+                            ->columnSpanFull(),
+                    ]),
             ]);
     }
 

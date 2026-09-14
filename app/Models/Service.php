@@ -10,7 +10,8 @@ class Service extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'article', 'price', 'individual_price', 'category_id', 'marker', 'title', 'value', 'href', 'transform_url',
+        'name', 'article', 'price', 'individual_price', 'sale_price', 'individual_sale_price', 'sale_source_discount_id',
+        'category_id', 'marker', 'title', 'value', 'href', 'transform_url',
         'seo_description', 'seo_keywords', 'meta_title', 'og_title', 'og_description', 'og_image', 'robots', 'canonical_path',
         'faq', 'description', 'type_page', 'promotion', 'created_at', 'updated_at', 'sort_order',
     ];
@@ -27,6 +28,60 @@ class Service extends Model
     public function groups()
     {
         return $this->belongsToMany(Group::class, 'service_group');
+    }
+
+    public function discounts()
+    {
+        return $this->belongsToMany(discount::class, 'discount_service')
+            ->withPivot(['attach_mode', 'custom_percent'])
+            ->withTimestamps();
+    }
+
+    public function saleSourceDiscount()
+    {
+        return $this->belongsTo(discount::class, 'sale_source_discount_id');
+    }
+
+    /** Effective stream unit price (sale if set). */
+    public function effectiveStreamPrice(): float
+    {
+        $base = floatval($this->price ?? 0);
+        $sale = floatval($this->sale_price ?? 0);
+        if ($sale > 0) {
+            return $sale;
+        }
+        return $base;
+    }
+
+    /** Effective individual unit price (sale if set), or 0 if unavailable. */
+    public function effectiveIndividualPrice(): float
+    {
+        $base = floatval($this->individual_price ?? 0);
+        if ($base <= 0) {
+            return 0;
+        }
+        $sale = floatval($this->individual_sale_price ?? 0);
+        if ($sale > 0) {
+            return $sale;
+        }
+        return $base;
+    }
+
+    public static function discountPercentFromPrices(float $base, float $sale): ?int
+    {
+        if ($base <= 0 || $sale <= 0 || $sale >= $base) {
+            return null;
+        }
+        return (int) round((($base - $sale) / $base) * 100);
+    }
+
+    public static function applyPercentToPrice(float $base, int $percent): int
+    {
+        if ($base <= 0 || $percent <= 0) {
+            return (int) round($base);
+        }
+        $percent = min(100, max(0, $percent));
+        return (int) max(0, round($base * (100 - $percent) / 100));
     }
 
     /**

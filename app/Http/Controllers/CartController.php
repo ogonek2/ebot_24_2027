@@ -23,14 +23,7 @@ class CartController extends Controller
             $service = Service::with('categories')->find($item['service_id']);
             if ($service) {
                 $category = $service->categories->first();
-                $price = $item['cleaning_type'] === 'individual' && $service->individual_price > 0
-                    ? $service->individual_price
-                    : $service->price;
-
-                // Применяем скидку категории
-                if ($category && $category->hasActiveDiscount()) {
-                    $price = $category->calculateDiscountedPrice($price);
-                }
+                $price = $this->resolveCartUnitPrice($service, $item['cleaning_type']);
 
                 $cartItems[] = [
                     'key' => $key,
@@ -150,6 +143,33 @@ class CartController extends Controller
     }
 
     /**
+     * Effective unit price for cart: sale_* first, else base, else category % on base only when no sale.
+     */
+    private function resolveCartUnitPrice(Service $service, string $cleaningType): float
+    {
+        if ($cleaningType === 'individual' && floatval($service->individual_price ?? 0) > 0) {
+            $sale = floatval($service->individual_sale_price ?? 0);
+            if ($sale > 0) {
+                return $sale;
+            }
+            return floatval($service->individual_price);
+        }
+
+        $base = floatval($service->price ?? 0);
+        $sale = floatval($service->sale_price ?? 0);
+        if ($sale > 0) {
+            return $sale;
+        }
+
+        $category = $service->categories->first();
+        if ($category && $category->hasActiveDiscount()) {
+            return floatval($category->calculateDiscountedPrice($base));
+        }
+
+        return $base;
+    }
+
+    /**
      * Сгенерировать ключ корзины
      */
     private function generateCartKey($serviceId, $cleaningType)
@@ -195,14 +215,7 @@ class CartController extends Controller
             $service = Service::with('categories')->find($item['service_id']);
             if ($service) {
                 $category = $service->categories->first();
-                $price = $item['cleaning_type'] === 'individual' && $service->individual_price > 0
-                    ? $service->individual_price
-                    : $service->price;
-
-                // Применяем скидку категории
-                if ($category && $category->hasActiveDiscount()) {
-                    $price = $category->calculateDiscountedPrice($price);
-                }
+                $price = $this->resolveCartUnitPrice($service, $item['cleaning_type']);
 
                 $cartItems[] = [
                     'service_id' => $service->id,

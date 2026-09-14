@@ -4,16 +4,15 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\discount;
+use App\Services\SpaBootstrap;
 use Illuminate\Http\JsonResponse;
 
 class PromotionController extends Controller
 {
     public function index(): JsonResponse
     {
-        $promotions = discount::orderBy('sort_order')->orderByDesc('created_at')->get();
-
         return response()->json([
-            'data' => $promotions->map(fn ($d) => $this->serialize($d))->values(),
+            'data' => SpaBootstrap::serializeDiscounts(),
         ]);
     }
 
@@ -27,25 +26,11 @@ class PromotionController extends Controller
             ->get();
 
         return response()->json([
-            'promotion' => array_merge($this->serialize($promotion), [
-                'terms' => $promotion->umowy,
-            ]),
-            'otherPromotions' => $others->map(fn ($d) => $this->serialize($d))->values(),
+            'promotion' => SpaBootstrap::serializeDiscountDetail($promotion),
+            'otherPromotions' => collect(SpaBootstrap::serializeDiscounts())
+                ->where('id', '!=', $promotion->id)
+                ->take(3)
+                ->values(),
         ]);
-    }
-
-    private function serialize(discount $d): array
-    {
-        return [
-            'id' => $d->id,
-            'name' => $d->name ?? 'Акція',
-            'discountAction' => $d->discount_action,
-            'locations' => $d->locations,
-            'banner' => $d->banner ? asset('storage/' . $d->banner) : null,
-            'color' => $d->color,
-            'textColor' => $d->text_color,
-            'discountColor' => $d->discount_color,
-            'url' => '/aktsii/' . $d->id,
-        ];
     }
 }

@@ -8,6 +8,9 @@ use App\Models\CtaHeader;
 use App\Models\cities;
 use App\Models\discount;
 use App\Models\locations;
+use App\Models\RepairItem;
+use App\Models\RepairPriceList;
+use App\Models\RepairSection;
 use App\Models\Service;
 use Illuminate\Support\Collection;
 
@@ -189,9 +192,11 @@ class SpaBootstrap
         return Category::with([
             'services' => fn ($q) => $q->orderBy('name'),
             'children.services' => fn ($q) => $q->orderBy('name'),
+            'repairPriceList.sections.items',
+            'children.repairPriceList.sections.items',
         ])
             ->whereNull('parent_id')
-            ->where(fn ($q) => $q->whereHas('services')->orWhereHas('children.services'))
+            ->where(fn ($q) => $q->whereHas('services')->orWhereHas('children.services')->orWhereHas('repairPriceList'))
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get();
@@ -205,7 +210,7 @@ class SpaBootstrap
             $result[] = self::serializeCategoryEntry($category);
 
             foreach ($category->children as $child) {
-                if ($child->services->isNotEmpty()) {
+                if ($child->services->isNotEmpty() || ($child->repairPriceList && $child->repairPriceList->is_published)) {
                     $result[] = self::serializeCategoryEntry($child, $category);
                 }
             }
@@ -216,9 +221,28 @@ class SpaBootstrap
 
     public static function serializeCategoryEntry(Category $category, ?Category $parent = null): array
     {
+        if (!$category->relationLoaded('repairPriceList')) {
+            $category->load(['repairPriceList.sections.items']);
+        }
+
+        $repairList = $category->repairPriceList;
+        $hasPublishedRepair = $repairList && $repairList->is_published;
+
         $services = $parent === null
             ? $category->getAllServices()->sortBy('name')->values()
             : $category->services->sortBy('name')->values();
+
+        // Hide legacy zero-price quote services when their primary category has a published repair list.
+        $services = $services->filter(function (Service $s) use ($category) {
+            $owner = $s->getPrimaryCategory() ?? $category;
+            if (!$owner->relationLoaded('repairPriceList')) {
+                $owner->load('repairPriceList');
+            }
+            if ($owner->repairPriceList && $owner->repairPriceList->is_published) {
+                return floatval($s->price ?? 0) > 0 || floatval($s->individual_price ?? 0) > 0;
+            }
+            return true;
+        })->values();
 
         return [
             'id' => $category->href,
@@ -232,28 +256,88 @@ class SpaBootstrap
                 ->map(fn (Service $s) => self::serializeService($s, $category))
                 ->values()
                 ->all(),
+            'repairPriceList' => $hasPublishedRepair
+                ? self::serializeRepairPriceList($repairList)
+                : null,
+        ];
+    }
+
+    public static function serializeRepairPriceList(RepairPriceList $list): array
+    {
+        if (!$list->relationLoaded('sections')) {
+            $list->load(['sections.items', 'category']);
+        }
+
+        return [
+            'id' => $list->id,
+            'title' => $list->title,
+            'categoryHref' => $list->category?->href,
+            'sections' => $list->sections->map(fn (RepairSection $section) => [
+                'id' => $section->id,
+                'title' => $section->title,
+                'items' => $section->items->map(fn (RepairItem $item) => [
+                    'id' => $item->id,
+                    'name' => $item->name,
+                    'price' => (int) $item->price,
+                    'priceLabel' => trim(($item->price_prefix ? $item->price_prefix . ' ' : '') . number_format((int) $item->price, 0, '.', ' ') . ' грн'),
+                    'pricePrefix' => $item->price_prefix,
+                    'note' => $item->note,
+                    'unit' => $item->unit,
+                ])->values()->all(),
+            ])->values()->all(),
         ];
     }
 
     public static function serializeService(Service $service, Category $category): array
     {
-        $originalPrice = floatval($service->price ?? 0);
-        $individualPrice = floatval($service->individual_price ?? 0);
-        $hasPrice = $originalPrice > 0;
-        $discountedPrice = $originalPrice;
+        $baseStream = floatval($service->price ?? 0);
+        $baseIndividual = floatval($service->individual_price ?? 0);
+        $saleStream = floatval($service->sale_price ?? 0);
+        $saleIndividual = floatval($service->individual_sale_price ?? 0);
+
+        $hasPrice = $baseStream > 0;
+        $streamSaleActive = $hasPrice && $saleStream > 0 && $saleStream < $baseStream;
+        $individualSaleActive = $baseIndividual > 0 && $saleIndividual > 0 && $saleIndividual < $baseIndividual;
+
+        $effectiveStream = $baseStream;
+        $oldStream = null;
+        $streamPercent = null;
         $hasDiscount = false;
 
-        if ($hasPrice) {
+        if ($streamSaleActive) {
+            $effectiveStream = $saleStream;
+            $oldStream = $baseStream;
+            $streamPercent = Service::discountPercentFromPrices($baseStream, $saleStream);
+            $hasDiscount = true;
+        } elseif ($hasPrice) {
+            // Legacy category % discount only when no explicit sale_price
             foreach ($service->categories as $serviceCategory) {
                 if ($serviceCategory->hasActiveDiscount()) {
-                    $discountedPrice = floatval($serviceCategory->calculateDiscountedPrice($originalPrice));
+                    $effectiveStream = floatval($serviceCategory->calculateDiscountedPrice($baseStream));
+                    $oldStream = $baseStream;
+                    $streamPercent = (int) $serviceCategory->getDiscountPercent();
                     $hasDiscount = true;
                     break;
                 }
             }
             if (!$hasDiscount && $category->hasActiveDiscount()) {
-                $discountedPrice = floatval($category->calculateDiscountedPrice($originalPrice));
+                $effectiveStream = floatval($category->calculateDiscountedPrice($baseStream));
+                $oldStream = $baseStream;
+                $streamPercent = (int) $category->getDiscountPercent();
                 $hasDiscount = true;
+            }
+        }
+
+        $effectiveIndividual = null;
+        $oldIndividual = null;
+        $individualPercent = null;
+        if ($baseIndividual > 0) {
+            if ($individualSaleActive) {
+                $effectiveIndividual = $saleIndividual;
+                $oldIndividual = $baseIndividual;
+                $individualPercent = Service::discountPercentFromPrices($baseIndividual, $saleIndividual);
+            } else {
+                $effectiveIndividual = $baseIndividual;
             }
         }
 
@@ -264,13 +348,16 @@ class SpaBootstrap
             'name' => $service->name,
             'href' => $service->transform_url ?? $service->href,
             'categoryHref' => $primary->href,
-            'price' => $hasPrice ? number_format($hasDiscount ? $discountedPrice : $originalPrice, 0, '.', ',') . '₴' : 'Ціна за запитом',
-            'priceBatch' => $hasPrice ? number_format($hasDiscount ? $discountedPrice : $originalPrice, 0, '.', ',') . '₴' : 'Ціна за запитом',
-            'individualPrice' => $individualPrice > 0
-                ? number_format($individualPrice, 0, '.', ',') . '₴'
+            'price' => $hasPrice ? number_format($effectiveStream, 0, '.', ',') . '₴' : 'Ціна за запитом',
+            'priceBatch' => $hasPrice ? number_format($effectiveStream, 0, '.', ',') . '₴' : 'Ціна за запитом',
+            'individualPrice' => $effectiveIndividual !== null
+                ? number_format($effectiveIndividual, 0, '.', ',') . '₴'
                 : null,
-            'oldPrice' => $hasDiscount ? number_format($originalPrice, 0, '.', ',') . '₴' : null,
-            'promo' => $hasDiscount || !empty($service->marker),
+            'oldPrice' => $oldStream !== null ? number_format($oldStream, 0, '.', ',') . '₴' : null,
+            'individualOldPrice' => $oldIndividual !== null ? number_format($oldIndividual, 0, '.', ',') . '₴' : null,
+            'discountPercent' => $streamPercent,
+            'individualDiscountPercent' => $individualPercent,
+            'promo' => $hasDiscount || $individualSaleActive || !empty($service->marker),
             'marker' => $service->marker,
             'seoDescription' => $service->seo_description ?: null,
         ];
@@ -282,6 +369,7 @@ class SpaBootstrap
             'id' => $d->id,
             'name' => $d->name ?? 'Акція',
             'discountAction' => $d->discount_action,
+            'discountPercent' => $d->discount_percent,
             'locations' => $d->locations,
             'banner' => self::storageUrl($d->banner),
             'color' => $d->color,
@@ -289,6 +377,37 @@ class SpaBootstrap
             'discountColor' => $d->discount_color,
             'url' => '/aktsii/' . $d->id,
         ])->values()->all();
+    }
+
+    public static function serializeDiscountDetail(discount $promo): array
+    {
+        $promo->load(['services.categories']);
+
+        $base = [
+            'id' => $promo->id,
+            'name' => $promo->name ?? 'Акція',
+            'discountAction' => $promo->discount_action,
+            'discountPercent' => $promo->discount_percent,
+            'locations' => $promo->locations,
+            'banner' => self::storageUrl($promo->banner),
+            'color' => $promo->color,
+            'textColor' => $promo->text_color,
+            'discountColor' => $promo->discount_color,
+            'terms' => $promo->umowy,
+            'url' => '/aktsii/' . $promo->id,
+        ];
+
+        $services = $promo->services->map(function (Service $service) {
+            $category = $service->getPrimaryCategory() ?? $service->categories->first();
+            if (!$category) {
+                return null;
+            }
+            return self::serializeService($service, $category);
+        })->filter()->values()->all();
+
+        $base['services'] = $services;
+
+        return $base;
     }
 
     public static function serializeBranches(): array

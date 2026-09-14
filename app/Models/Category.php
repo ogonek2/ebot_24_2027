@@ -23,6 +23,11 @@ class Category extends Model
         return $this->belongsToMany(Service::class);
     }
 
+    public function repairPriceList()
+    {
+        return $this->hasOne(RepairPriceList::class);
+    }
+
     public function blogPosts()
     {
         return $this->belongsToMany(BlogPost::class, 'blog_post_category');

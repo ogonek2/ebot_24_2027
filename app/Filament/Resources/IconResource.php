@@ -55,7 +55,8 @@ class IconResource extends Resource
                             ->required()
                             ->helperText('SVG, PNG або JPEG. Максимальний розмір: 2MB')
                             ->storeFileNamesIn('file_name')
-                            ->imagePreviewHeight('150'),
+                            ->imagePreviewHeight('150')
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                     ]),
             ]);
     }
@@ -66,9 +67,8 @@ class IconResource extends Resource
             ->columns([
                 Tables\Columns\ImageColumn::make('file_path')
                     ->label('Іконка')
-                    ->getStateUsing(function ($record) {
-                        return $record->file_path ? asset('storage/' . $record->file_path) : null;
-                    })
+                    ->getStateUsing(fn ($record) => $record->file_path)
+                    ->url(fn ($record) => \App\Support\FilamentStorage::url($record->file_path))
                     ->size(50)
                     ->circular(false),
                 Tables\Columns\TextColumn::make('name')

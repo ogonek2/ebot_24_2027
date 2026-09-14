@@ -59,7 +59,8 @@ class B2bResource extends Resource
                             ->disk('public')
                             ->visibility('public')
                             ->nullable()
-                            ->helperText('Зображення для B2B сторінки'),
+                            ->helperText('Зображення для B2B сторінки')
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                     ]),
             ]);
     }

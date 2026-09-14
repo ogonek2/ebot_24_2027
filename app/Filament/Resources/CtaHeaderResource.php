@@ -70,13 +70,13 @@ class CtaHeaderResource extends Resource
                                 
                                 $previewHtml = '';
                                 if ($selectedIcon && $selectedIcon->file_path) {
-                                    $imageUrl = asset('storage/' . $selectedIcon->file_path);
+                                    $imageUrl = \App\Support\FilamentStorage::url($selectedIcon->file_path);
                                     $name = $selectedIcon->name ?: $selectedIcon->file_name;
                                     $previewHtml = '
                                         <div class="mt-4 p-4 bg-gray-50 rounded-lg">
                                             <p class="text-sm font-medium text-gray-700 mb-2">Вибрана іконка:</p>
                                             <div class="flex items-center gap-4">
-                                                <img src="' . $imageUrl . '" alt="' . htmlspecialchars($name) . '" class="w-16 h-16 object-contain border border-gray-200 rounded p-2 bg-white">
+                                                <img src="' . e($imageUrl) . '" alt="' . htmlspecialchars($name) . '" class="w-16 h-16 object-contain border border-gray-200 rounded p-2 bg-white">
                                                 <div>
                                                     <p class="text-sm font-semibold text-gray-900">' . htmlspecialchars($name) . '</p>
                                                     ' . ($selectedIcon->file_name ? '<p class="text-xs text-gray-500">' . htmlspecialchars($selectedIcon->file_name) . '</p>' : '') . '
@@ -89,18 +89,18 @@ class CtaHeaderResource extends Resource
                                 // Генерируем HTML для модального окна с иконками
                                 $iconsGrid = '';
                                 foreach ($icons as $icon) {
-                                    $iconUrl = asset('storage/' . $icon->file_path);
+                                    $iconUrl = \App\Support\FilamentStorage::url($icon->file_path);
                                     $iconName = htmlspecialchars($icon->name ?: $icon->file_name);
                                     $isSelected = $iconId == $icon->id ? 'border-primary-500 bg-primary-50' : 'border-gray-200';
                                     $iconsGrid .= '
                                         <button
                                             type="button"
-                                            onclick="window.selectIcon(' . $icon->id . ', \'' . $iconUrl . '\', \'' . addslashes($iconName) . '\')"
+                                            onclick="window.selectIcon(' . $icon->id . ', \'' . e($iconUrl) . '\', \'' . addslashes($iconName) . '\')"
                                             class="p-2 border-2 rounded-lg hover:border-primary-500 hover:bg-primary-50 transition-all ' . $isSelected . '"
                                             title="' . $iconName . '"
                                         >
                                             <img 
-                                                src="' . $iconUrl . '" 
+                                                src="' . e($iconUrl) . '" 
                                                 alt="' . $iconName . '"
                                                 class="w-full h-full object-contain"
                                             />
@@ -241,19 +241,16 @@ class CtaHeaderResource extends Resource
                     ->size(50)
                     ->getStateUsing(function ($record) {
                         if ($record->iconRelation && $record->iconRelation->file_path) {
-                            return asset('storage/' . $record->iconRelation->file_path);
+                            return $record->iconRelation->file_path;
                         }
-                        if ($record->icon) {
-                            return asset('storage/' . $record->icon);
-                        }
-                        return null;
+                        return $record->icon ?: null;
                     })
                     ->url(function ($record) {
                         if ($record->iconRelation && $record->iconRelation->file_path) {
-                            return asset('storage/' . $record->iconRelation->file_path);
+                            return \App\Support\FilamentStorage::url($record->iconRelation->file_path);
                         }
                         if ($record->icon) {
-                        return asset('storage/' . $record->icon);
+                            return \App\Support\FilamentStorage::url($record->icon);
                         }
                         return null;
                     }),

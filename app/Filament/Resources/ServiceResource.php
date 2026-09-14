@@ -80,21 +80,53 @@ class ServiceResource extends Resource
                 Forms\Components\Section::make('Ціни')
                     ->schema([
                         Forms\Components\TextInput::make('price')
-                            ->label('Ціна (потокова)')
+                            ->label('Звичайна ціна (потокова)')
                             ->numeric()
                             ->minValue(0)
                             ->required()
                             ->suffix('₴')
-                            ->helperText('Може бути числом або текстом'),
-                        Forms\Components\TextInput::make('individual_price')
-                            ->label('Ціна (індивідуальна)')
+                            ->reactive(),
+                        Forms\Components\TextInput::make('sale_price')
+                            ->label('Знижкова ціна (потокова)')
                             ->numeric()
                             ->minValue(0)
                             ->nullable()
                             ->suffix('₴')
+                            ->reactive()
+                            ->helperText('Якщо заповнено — на сайті показується знижка і авто-%'),
+                        Forms\Components\Placeholder::make('stream_discount_pct')
+                            ->label('Знижка (потокова)')
+                            ->content(function ($get) {
+                                $base = floatval($get('price') ?? 0);
+                                $sale = floatval($get('sale_price') ?? 0);
+                                $pct = \App\Models\Service::discountPercentFromPrices($base, $sale);
+                                return $pct ? ("−{$pct}%") : '—';
+                            }),
+                        Forms\Components\TextInput::make('individual_price')
+                            ->label('Звичайна ціна (індивідуальна)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->nullable()
+                            ->suffix('₴')
+                            ->reactive()
                             ->helperText('Якщо не вказано, індивідуальна чистка недоступна'),
+                        Forms\Components\TextInput::make('individual_sale_price')
+                            ->label('Знижкова ціна (індивідуальна)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->nullable()
+                            ->suffix('₴')
+                            ->reactive(),
+                        Forms\Components\Placeholder::make('individual_discount_pct')
+                            ->label('Знижка (індивідуальна)')
+                            ->content(function ($get) {
+                                $base = floatval($get('individual_price') ?? 0);
+                                $sale = floatval($get('individual_sale_price') ?? 0);
+                                $pct = \App\Models\Service::discountPercentFromPrices($base, $sale);
+                                return $pct ? ("−{$pct}%") : '—';
+                            }),
                     ])
-                    ->columns(2),
+                    ->columns(3),
                 
                 Forms\Components\Section::make('Категорії та групи')
                     ->schema([
@@ -149,7 +181,9 @@ class ServiceResource extends Resource
                             ->label('OG image')
                             ->image()
                             ->directory('src/seo/services')
-                            ->disk('public'),
+                            ->disk('public')
+                            ->visibility('public')
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
                         Forms\Components\TextInput::make('robots')
                             ->label('Robots'),
                         Forms\Components\TextInput::make('canonical_path')

@@ -9,9 +9,94 @@ class discount extends Model
     protected $table = 'discounts';
     
     protected $fillable = [
-        'name', 'link_name', 'banner', 'color', 'text_color', 'discount_color', 'sort_order', 'locations', 'umowy', 'discount_action', 'telegram_name',
+        'name', 'link_name', 'banner', 'color', 'text_color', 'discount_color', 'sort_order', 'locations', 'umowy', 'discount_action', 'discount_percent', 'telegram_name',
     ];
 
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'discount_service')
+            ->withPivot(['attach_mode', 'custom_percent'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Sync attached services and write sale_* when mode is shared/custom.
+     *
+     * @param  array<int, array{service_id:int, attach_mode:string, custom_percent?:int|null}>  $rows
+     */
+    public function syncPromoServices(array $rows): void
+    {
+        $previousIds = $this->services()->pluck('services.id')->all();
+        $sync = [];
+        foreach ($rows as $row) {
+            $serviceId = (int) ($row['service_id'] ?? 0);
+            if ($serviceId <= 0) {
+                continue;
+            }
+            $mode = $row['attach_mode'] ?? 'shared';
+            if (!in_array($mode, ['shared', 'custom', 'none'], true)) {
+                $mode = 'shared';
+            }
+            $sync[$serviceId] = [
+                'attach_mode' => $mode,
+                'custom_percent' => $mode === 'custom' ? ($row['custom_percent'] ?? null) : null,
+            ];
+        }
+
+        $this->services()->sync($sync);
+
+        $detached = array_diff($previousIds, array_keys($sync));
+        if ($detached) {
+            Service::query()
+                ->whereIn('id', $detached)
+                ->where('sale_source_discount_id', $this->id)
+                ->update([
+                    'sale_price' => null,
+                    'individual_sale_price' => null,
+                    'sale_source_discount_id' => null,
+                ]);
+        }
+
+        $sharedPercent = (int) ($this->discount_percent ?? 0);
+
+        foreach ($sync as $serviceId => $pivot) {
+            $service = Service::find($serviceId);
+            if (!$service) {
+                continue;
+            }
+
+            $mode = $pivot['attach_mode'];
+            if ($mode === 'none') {
+                if ((int) $service->sale_source_discount_id === (int) $this->id) {
+                    $service->sale_price = null;
+                    $service->individual_sale_price = null;
+                    $service->sale_source_discount_id = null;
+                    $service->save();
+                }
+                continue;
+            }
+
+            $percent = $mode === 'custom'
+                ? (int) ($pivot['custom_percent'] ?? 0)
+                : $sharedPercent;
+
+            if ($percent <= 0) {
+                continue;
+            }
+
+            $baseStream = floatval($service->price ?? 0);
+            $baseIndividual = floatval($service->individual_price ?? 0);
+
+            if ($baseStream > 0) {
+                $service->sale_price = Service::applyPercentToPrice($baseStream, $percent);
+            }
+            if ($baseIndividual > 0) {
+                $service->individual_sale_price = Service::applyPercentToPrice($baseIndividual, $percent);
+            }
+            $service->sale_source_discount_id = $this->id;
+            $service->save();
+        }
+    }
     protected static function boot()
     {
         parent::boot();

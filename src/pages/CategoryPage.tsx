@@ -4,6 +4,7 @@ import PriceCatalog from "../components/PriceCatalog";
 import PageSkeleton from "../components/skeleton/PageSkeleton";
 import SubcategoryNav from "../components/SubcategoryNav";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import RepairPriceListView from "@/components/catalog-console/RepairPriceListView";
 import { useBootstrap, useBootstrapState } from "@/context/BootstrapContext";
 import { openFeedbackModal } from "@/context/FeedbackContext";
 import { buildCategoryBreadcrumbItems, findCategory } from "@/lib/categories";
@@ -74,6 +75,12 @@ export default function CategoryPage() {
         </div>
 
         <SubcategoryNav categories={mergedCategories} currentId={category} />
+
+        {categoryData.repairPriceList && (
+          <div className="mb-8">
+            <RepairPriceListView list={categoryData.repairPriceList} variant="page" categoryHref={category} />
+          </div>
+        )}
 
         <PriceCatalog variant="page" suppressHeading onCheckout={() => navigate(ROUTES.cart)} />
 

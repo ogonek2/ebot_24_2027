@@ -1,16 +1,39 @@
+import { useEffect, useState } from "react";
 import CategoryIcon from "./CategoryIcon";
 import Reveal from "./Reveal";
 import { useAppNavigate } from "../lib/navigation";
 import { useBootstrap } from "@/context/BootstrapContext";
+import { fetchLocationsCached } from "@/lib/api";
+import type { SpaBranch } from "@/lib/bootstrap";
 
 export default function LocationsSection() {
   const { goOrder, goLocations } = useAppNavigate();
   const { branches = [] } = useBootstrap();
+  const [fallbackBranches, setFallbackBranches] = useState<SpaBranch[]>([]);
 
-  const locations = branches.map((branch, index) => ({
+  useEffect(() => {
+    if (branches.length > 0) return;
+    let cancelled = false;
+    void fetchLocationsCached()
+      .then((res) => {
+        if (cancelled) return;
+        setFallbackBranches(res.branches ?? []);
+      })
+      .catch(() => {
+        if (!cancelled) setFallbackBranches([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [branches.length]);
+
+  const source = branches.length > 0 ? branches : fallbackBranches;
+
+  const locations = source.map((branch, index) => ({
     id: branch.id,
     name: branch.city,
     address: branch.address,
+    district: branch.district,
     hours: branch.workingHours,
     image: branch.image,
     badge: index === 0 ? "Головний" : null,
@@ -40,8 +63,7 @@ export default function LocationsSection() {
                   <CategoryIcon name="delivery" size={36} alt="Кур'єр" fallback />
                 </div>
                 <div>
-                  <h3 className="font-black text-[18px] mb-1">
-                  Доставка в обидві сторони</h3>
+                  <h3 className="font-black text-[18px] mb-1">Доставка в обидві сторони</h3>
                   <p className="text-white/80 text-[13px] mb-4">
                     Вартість доставки по Києву від 400 грн.
                   </p>
@@ -66,6 +88,9 @@ export default function LocationsSection() {
                 <Reveal key={loc.id} delay={i * 80}>
                   <div className="glass-card p-5 h-full">
                     <h3 className="font-bold text-[14px] text-[#1A1A2E] mb-1">{loc.name}</h3>
+                    {loc.district && (
+                      <div className="text-[11px] font-semibold text-[#f97171] mb-1">{loc.district}</div>
+                    )}
                     <p className="text-[12px] text-[#1A1A2E]/55 mb-2">{loc.address}</p>
                     <div className="text-[11px] text-[#1A1A2E]/45">{loc.hours}</div>
                     {loc.linkMap && (

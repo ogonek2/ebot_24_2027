@@ -431,7 +431,9 @@ export default function QuickActionsPanel({ onClose, quickActions }: Props) {
                     <div className="min-w-0 flex-1">
 
                       <div className="font-bold text-[11px] text-[#1A1A2E]">{branch.city}</div>
-
+                      {branch.district && (
+                        <div className="text-[10px] font-semibold text-[#f97171]">{branch.district}</div>
+                      )}
                       <div className="text-[12px] text-[#1A1A2E]/55 truncate">{branch.address}</div>
 
                       {branch.workingHours && (

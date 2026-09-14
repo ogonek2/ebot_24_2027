@@ -1,14 +1,7 @@
-import { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import CategoryNavList, { buildCategoryOptions, resolveSelectionLabel } from "./CategoryNavList";
-import type { CatalogFilters, CatalogNode } from "./types";
-
-const FILTER_LABELS: { key: keyof CatalogFilters; label: string }[] = [
-  { key: "hasPrice", label: "Є ціна" },
-  { key: "onRequest", label: "За запитом" },
-  { key: "promo", label: "Акція" },
-  { key: "fastTerm", label: "До 24 год" },
-];
+import { useState } from "react";
+import { resolveSelectionLabel } from "./CategoryNavList";
+import CategoryPickerModal from "./CategoryPickerModal";
+import type { CatalogNode } from "./types";
 
 type Props = {
   nodes: CatalogNode[];
@@ -16,8 +9,6 @@ type Props = {
   onSelectCategory: (id: string) => void;
   query: string;
   onQueryChange: (q: string) => void;
-  filters: CatalogFilters;
-  onToggleFilter: (key: keyof CatalogFilters) => void;
   resultCount: number;
   cartCount: number;
   onCheckout?: () => void;
@@ -29,161 +20,79 @@ export default function MobileCatalogBar({
   onSelectCategory,
   query,
   onQueryChange,
-  filters,
-  onToggleFilter,
   resultCount,
   cartCount,
   onCheckout,
 }: Props) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
-  const searchRef = useRef<HTMLInputElement>(null);
-  const selectId = useId();
-  const options = buildCategoryOptions(nodes);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const selectionLabel = resolveSelectionLabel(nodes, selectionId);
-
-  useEffect(() => {
-    if (searchOpen) searchRef.current?.focus();
-  }, [searchOpen]);
-
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDrawerOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [drawerOpen]);
-
-  useEffect(() => {
-    if (!drawerOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [drawerOpen]);
-
-  const closeSearch = () => {
-    setSearchOpen(false);
-    onQueryChange("");
-  };
-
-  const pickCategory = (id: string) => {
-    onSelectCategory(id);
-    setDrawerOpen(false);
-  };
 
   return (
     <>
-      <div className={`cc-mobile-bar ${searchOpen ? "is-search-open" : ""}`}>
-        {searchOpen ? (
-          <div className="cc-mobile-bar__search">
-            <SearchIcon />
-            <input
-              ref={searchRef}
-              value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
-              onBlur={() => {
-                if (!query.trim()) setSearchOpen(false);
-              }}
-              placeholder="Пошук по каталогу…"
-              className="cc-mobile-bar__search-input"
-              aria-label="Пошук"
-            />
-            <button type="button" className="cc-mobile-bar__icon-btn" onClick={closeSearch} aria-label="Закрити пошук">
+      <div className="cc-mobile-bar">
+        <div className="cc-mobile-bar__actions">
+          <button
+            type="button"
+            className="cc-mobile-bar__icon-btn"
+            onClick={() => setPickerOpen(true)}
+            aria-label="Категорії"
+            aria-haspopup="dialog"
+            aria-expanded={pickerOpen}
+          >
+            <MenuIcon />
+          </button>
+
+          <button
+            type="button"
+            className="cc-mobile-bar__select"
+            onClick={() => setPickerOpen(true)}
+            aria-label={selectionLabel}
+          >
+            <span className="truncate">{selectionLabel}</span>
+          </button>
+
+          {cartCount > 0 && (
+            <button type="button" onClick={onCheckout} className="cc-mobile-bar__cart" aria-label="Кошик">
+              <CartIcon />
+              <span>{cartCount}</span>
+            </button>
+          )}
+        </div>
+
+        <div className="cc-mobile-bar__search mt-2">
+          <SearchIcon />
+          <input
+            value={query}
+            onChange={(e) => onQueryChange(e.target.value)}
+            placeholder="Пошук по каталогу…"
+            className="cc-mobile-bar__search-input cc-search"
+            aria-label="Пошук"
+          />
+          {query.trim() && (
+            <button
+              type="button"
+              className="cc-mobile-bar__icon-btn"
+              onClick={() => onQueryChange("")}
+              aria-label="Очистити пошук"
+            >
               <CloseIcon />
             </button>
-          </div>
-        ) : (
-          <div className="cc-mobile-bar__actions">
-            <button
-              type="button"
-              className="cc-mobile-bar__icon-btn"
-              onClick={() => setDrawerOpen(true)}
-              aria-label="Категорії"
-            >
-              <MenuIcon />
-            </button>
-
-            <label htmlFor={selectId} className="sr-only">
-              Категорія
-            </label>
-            <select
-              id={selectId}
-              value={options.some((o) => o.id === selectionId) ? selectionId : options[0]?.id ?? ""}
-              onChange={(e) => onSelectCategory(e.target.value)}
-              className="cc-mobile-bar__select"
-              aria-label={selectionLabel}
-            >
-              {options.map((opt) => (
-                <option key={opt.id} value={opt.id}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-
-            <button
-              type="button"
-              className="cc-mobile-bar__icon-btn"
-              onClick={() => setSearchOpen(true)}
-              aria-label="Пошук"
-            >
-              <SearchIcon />
-            </button>
-
-            {cartCount > 0 && (
-              <button type="button" onClick={onCheckout} className="cc-mobile-bar__cart" aria-label="Кошик">
-                <CartIcon />
-                <span>{cartCount}</span>
-              </button>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
-      {!searchOpen && (
-        <div className="cc-mobile-bar__meta">
-          {resultCount} позицій
-          {query.trim() ? " · пошук" : ""}
-        </div>
-      )}
+      <div className="cc-mobile-bar__meta">
+        {resultCount} позицій
+        {query.trim() ? " · пошук" : ""}
+      </div>
 
-      {drawerOpen &&
-        createPortal(
-          <div className="cc-cat-drawer" role="dialog" aria-modal="true" aria-label="Категорії каталогу">
-            <button type="button" className="cc-cat-drawer__backdrop" onClick={() => setDrawerOpen(false)} aria-label="Закрити" />
-            <aside className="cc-cat-drawer__panel">
-              <div className="cc-cat-drawer__head">
-                <span className="font-bold text-[15px] text-[#1A1A2E]">Категорії</span>
-                <button type="button" className="cc-icon-btn" onClick={() => setDrawerOpen(false)} aria-label="Закрити">
-                  <CloseIcon />
-                </button>
-              </div>
-
-              <div className="cc-cat-drawer__body cc-scroll">
-                <CategoryNavList nodes={nodes} selectionId={selectionId} onSelect={pickCategory} compact />
-              </div>
-
-              <div className="cc-cat-drawer__foot">
-                <div className="text-[10px] font-bold uppercase tracking-wider text-[#1A1A2E]/40 mb-2 px-1">Фільтри</div>
-                <div className="flex flex-wrap gap-1.5">
-                  {FILTER_LABELS.map(({ key, label }) => (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => onToggleFilter(key)}
-                      className={`cc-filter-chip ${filters[key] ? "cc-filter-chip--active" : ""}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </div>,
-          document.body,
-        )}
+      <CategoryPickerModal
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        nodes={nodes}
+        selectionId={selectionId}
+        onSelectCategory={onSelectCategory}
+      />
     </>
   );
 }
@@ -198,7 +107,16 @@ function MenuIcon() {
 
 function SearchIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+    <svg
+      className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#1A1A2E]/45"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      aria-hidden
+    >
       <circle cx="11" cy="11" r="7" />
       <path d="M20 20l-3-3" strokeLinecap="round" />
     </svg>

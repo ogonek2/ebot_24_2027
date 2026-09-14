@@ -128,6 +128,9 @@ export default function LocationsPage() {
                         >
                           <div className="mb-4">
                             <h3 className="locations-card__street">{location.street}</h3>
+                            {location.district && (
+                              <p className="text-[13px] font-semibold text-[#f97171] mt-1">{location.district}</p>
+                            )}
                             {location.value && (
                               <p className="locations-card__value">{location.value}</p>
                             )}

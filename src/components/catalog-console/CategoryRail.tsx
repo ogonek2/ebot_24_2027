@@ -22,8 +22,8 @@ export default function CategoryRail({ nodes, selectionId, onSelect, collapsed, 
 
   return (
     <aside className="cc-rail hidden md:flex flex-col">
-      <div className="flex items-center justify-between px-3 py-2.5 border-b border-white/25">
-        <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-[#1A1A2E]/40">Категорії</span>
+      <div className="cc-rail-head">
+        <span className="cc-rail-head__label">Категорії</span>
         <button type="button" onClick={onToggleCollapse} className="cc-icon-btn" title="Згорнути">
           <ChevronIcon dir="left" />
         </button>

@@ -43,6 +43,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setItems(nextItems);
       setTotal(res.total ?? 0);
       setCount(nextItems.reduce((sum, item) => sum + item.quantity, 0));
+    } catch {
+      setItems([]);
+      setTotal(0);
+      setCount(0);
     } finally {
       setLoading(false);
     }

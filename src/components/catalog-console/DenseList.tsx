@@ -1,11 +1,10 @@
-import { forwardRef } from "react";
+import { forwardRef, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { resolveCatalogCleaningDisplay } from "@/lib/cartPrices";
 import { serviceUrl } from "@/lib/routes";
-import {
-  formatPriceCompact,
-  resolveItemPricing,
-} from "./utils";
+import CleaningTypeInfoButton from "./CleaningTypeInfoButton";
+import SalePriceCell from "./SalePriceCell";
+import { resolveItemPricing } from "./utils";
 import type { DensityMode, FlatRow } from "./types";
 
 type Props = {
@@ -17,33 +16,44 @@ type Props = {
   onHover: (row: FlatRow) => void;
   onSelect: (row: FlatRow) => void;
   onAdd: (row: FlatRow) => void;
+  topSlot?: ReactNode;
+  emptyMessage?: string;
 };
 
-function formatCleaningPrice(raw: string | null): string {
-  if (!raw) return "—";
-  return formatPriceCompact(raw);
-}
-
 const DenseList = forwardRef<HTMLDivElement, Props>(function DenseList(
-  { rows, density, selectedKey, inCartKeys, globalSearch, onHover, onSelect, onAdd },
+  { rows, density, selectedKey, inCartKeys, globalSearch, onHover, onSelect, onAdd, topSlot, emptyMessage },
   ref,
 ) {
   const rowDensity = density === "compact" ? "cc-dense-row--compact" : "cc-dense-row--comfortable";
+  const hideTableChrome = rows.length === 0 && Boolean(topSlot);
 
   return (
     <div className="cc-list-panel">
-      <div className="cc-dense-head-wrap border-b border-white/25 bg-white/10">
-        <div className="cc-dense-head px-4 text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E]/38">
-          <span>Послуга</span>
-          <span className="text-right">Інд</span>
-          <span className="text-right">Поток</span>
-          <span />
-        </div>
-      </div>
+      {topSlot}
+
+      {!hideTableChrome && (
+        <>
+          <div className="cc-dense-head-wrap border-b border-white/25 bg-white/10">
+            <div className="cc-dense-head px-4 text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E]/38">
+              <span className="flex items-center">Послуга</span>
+              <CleaningTypeInfoButton type="individual" align="end" />
+              <CleaningTypeInfoButton type="stream" align="end" />
+              <span />
+            </div>
+          </div>
+
+          <div className="cc-clean-info-mobile border-b border-white/25 bg-white/10">
+            <CleaningTypeInfoButton type="individual" align="start" />
+            <CleaningTypeInfoButton type="stream" align="start" />
+          </div>
+        </>
+      )}
 
       <div className="cc-list-flow" ref={ref}>
-        {rows.length === 0 && (
-          <div className="px-4 py-16 text-center text-[14px] text-[#1A1A2E]/45">Нічого не знайдено</div>
+        {rows.length === 0 && !topSlot && (
+          <div className="px-4 py-16 text-center text-[14px] text-[#1A1A2E]/45">
+            {emptyMessage ?? "Нічого не знайдено"}
+          </div>
         )}
 
         {rows.map((row) => {
@@ -52,6 +62,8 @@ const DenseList = forwardRef<HTMLDivElement, Props>(function DenseList(
           const onRequest = cleaning.isOnRequest;
           const selected = selectedKey === row.key;
           const inCart = inCartKeys.has(cartKey(row));
+          const pct = row.item.discountPercent ?? null;
+          const indPct = row.item.individualDiscountPercent ?? null;
 
           const servicePage =
             row.item.serviceHref && row.item.categoryHref
@@ -94,16 +106,25 @@ const DenseList = forwardRef<HTMLDivElement, Props>(function DenseList(
                       {row.item.name}
                     </span>
                   )}
-                  {pricing.promo && <span className="cc-chip cc-chip--promo">акція</span>}
+                  {(pct || indPct) && (
+                    <span className="cc-chip cc-chip--promo">−{pct || indPct}%</span>
+                  )}
+                  {pricing.promo && !pct && !indPct && <span className="cc-chip cc-chip--promo">акція</span>}
                   {onRequest && <span className="cc-chip">запит</span>}
                 </div>
 
-                <span className={`cc-price ${pricing.promo && cleaning.hasIndividual ? "text-[var(--cc-accent)]" : ""}`}>
-                  {formatCleaningPrice(cleaning.individualRaw)}
-                </span>
-                <span className="cc-price cc-price--muted">
-                  {formatCleaningPrice(cleaning.streamRaw)}
-                </span>
+                <SalePriceCell
+                  current={cleaning.individualRaw}
+                  oldPrice={row.item.individualOldPrice}
+                  discountPercent={indPct}
+                  accent={Boolean(indPct)}
+                />
+                <SalePriceCell
+                  current={cleaning.streamRaw}
+                  oldPrice={row.item.oldPrice}
+                  discountPercent={pct}
+                  muted
+                />
 
                 <button
                   type="button"
@@ -145,7 +166,8 @@ const DenseList = forwardRef<HTMLDivElement, Props>(function DenseList(
                     )}
                   </div>
                   <div className="cc-mobile-row__badges">
-                    {pricing.promo && <span className="cc-chip cc-chip--promo">акція</span>}
+                    {(pct || indPct) && <span className="cc-chip cc-chip--promo">−{pct || indPct}%</span>}
+                    {pricing.promo && !pct && !indPct && <span className="cc-chip cc-chip--promo">акція</span>}
                     {onRequest && <span className="cc-chip">за запитом</span>}
                   </div>
                 </div>
@@ -156,17 +178,25 @@ const DenseList = forwardRef<HTMLDivElement, Props>(function DenseList(
                   {cleaning.hasIndividual && (
                     <div className="cc-mobile-price">
                       <span className="cc-mobile-price__label">Індивідуальна</span>
-                      <span className={`cc-mobile-price__value ${pricing.promo ? "text-[var(--cc-accent)]" : ""}`}>
-                        {formatCleaningPrice(cleaning.individualRaw)}
-                      </span>
+                      <SalePriceCell
+                        current={cleaning.individualRaw}
+                        oldPrice={row.item.individualOldPrice}
+                        discountPercent={indPct}
+                        accent={Boolean(indPct)}
+                        className="cc-mobile-price__value"
+                      />
                     </div>
                   )}
                   {cleaning.hasStream && (
                     <div className="cc-mobile-price">
                       <span className="cc-mobile-price__label">Потокова</span>
-                      <span className="cc-mobile-price__value cc-mobile-price__value--muted">
-                        {formatCleaningPrice(cleaning.streamRaw)}
-                      </span>
+                      <SalePriceCell
+                        current={cleaning.streamRaw}
+                        oldPrice={row.item.oldPrice}
+                        discountPercent={pct}
+                        muted
+                        className="cc-mobile-price__value"
+                      />
                     </div>
                   )}
                   {onRequest && !cleaning.hasStream && !cleaning.hasIndividual && (

@@ -1,137 +1,156 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import CategoryIcon from "./CategoryIcon";
 import { useBootstrap } from "@/context/BootstrapContext";
-import { fetchAllServicesCached } from "@/lib/api";
-import { useCachedQuery } from "@/lib/useCachedQuery";
 import { ROUTES, categoryUrl } from "@/lib/routes";
 import { childCategories, topLevelCategories } from "@/lib/categories";
-import { serviceLinks, companyLinks } from "@/lib/siteNav";
+import type { SpaCatalogCategory } from "@/lib/bootstrap";
 
 type ServicesMegaMenuProps = {
   onNavigate?: () => void;
 };
 
+const QUICK = [
+  { label: "Прайс", href: ROUTES.services },
+  { label: "Кур'єр", href: ROUTES.courier },
+  { label: "Доставка", href: ROUTES.delivery },
+  { label: "Локації", href: ROUTES.locations },
+  { label: "Акції", href: ROUTES.promotions },
+] as const;
+
 export default function ServicesMegaMenu({ onNavigate }: ServicesMegaMenuProps) {
   const { categories = [] } = useBootstrap();
-  const navCategories = topLevelCategories(categories);
-  const { data } = useCachedQuery("api:services:all", () => fetchAllServicesCached());
-  const allServices = data?.data ?? [];
+  const navCategories = useMemo(() => topLevelCategories(categories), [categories]);
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!navCategories.length) {
+      setActiveId(null);
+      return;
+    }
+    if (!activeId || !navCategories.some((c) => c.id === activeId)) {
+      setActiveId(navCategories[0]!.id);
+    }
+  }, [navCategories, activeId]);
+
+  const active: SpaCatalogCategory | undefined = navCategories.find((c) => c.id === activeId);
+  const subs = active ? childCategories(categories, active.id) : [];
+  const serviceCount = active?.serviceCount ?? active?.items?.length ?? 0;
 
   return (
-    <div className="mega-menu-panel__card glass-strong rounded-[28px] p-5 sm:p-6 shadow-[0_24px_80px_rgba(26,26,46,0.1)] border border-white/70 w-full max-w-full min-w-0 box-border overflow-hidden">
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_200px] gap-6 min-w-0">
-        <div>
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E]/40 mb-4">
-            Категорії ({navCategories.length})
-          </p>
+    <div className="mega-menu">
+      <div className="mega-menu__glow" aria-hidden />
+
+      <div className="mega-menu__layout">
+        <aside className="mega-menu__index" aria-label="Категорії послуг">
+          <div className="mega-menu__kicker">
+            <span>Каталог</span>
+            <span className="mega-menu__count">{navCategories.length}</span>
+          </div>
+
           {navCategories.length > 0 ? (
-            <div className="grid sm:grid-cols-2 gap-2 max-h-[320px] overflow-y-auto pr-1">
-              {navCategories.map((cat) => {
-                const subs = childCategories(categories, cat.id);
+            <ul className="mega-menu__cats">
+              {navCategories.map((cat, i) => {
+                const isActive = cat.id === activeId;
                 return (
-                  <div key={cat.id} className="space-y-1">
+                  <li key={cat.id}>
                     <Link
                       to={categoryUrl(cat.id)}
                       onClick={onNavigate}
-                      className="flex items-center gap-3 rounded-2xl px-3 py-2.5 hover:bg-white/55 transition-colors no-underline group"
+                      onMouseEnter={() => setActiveId(cat.id)}
+                      onFocus={() => setActiveId(cat.id)}
+                      className={`mega-menu__cat ${isActive ? "is-active" : ""}`}
                     >
-                      <div className="w-9 h-9 rounded-xl bg-white/60 flex items-center justify-center shrink-0 overflow-hidden">
-                        <CategoryIcon src={cat.iconUrl} size={24} alt={cat.title} />
-                      </div>
-                      <span className="text-[13px] font-semibold text-[#1A1A2E]/75 group-hover:text-[#f97171] transition-colors line-clamp-2">
-                        {cat.title}
+                      <span className="mega-menu__cat-num">{String(i + 1).padStart(2, "0")}</span>
+                      <span className="mega-menu__cat-icon" aria-hidden>
+                        <CategoryIcon src={cat.iconUrl} size={22} alt="" />
                       </span>
+                      <span className="mega-menu__cat-title">{cat.title}</span>
                     </Link>
-                    {subs.length > 0 && (
-                      <div className="pl-3 space-y-0.5">
-                        {subs.map((sub) => (
-                          <Link
-                            key={sub.id}
-                            to={categoryUrl(sub.id)}
-                            onClick={onNavigate}
-                            className="block rounded-xl px-3 py-1.5 text-[12px] font-medium text-[#1A1A2E]/55 hover:text-[#f97171] hover:bg-white/45 no-underline"
-                          >
-                            {sub.title}
-                          </Link>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  </li>
                 );
               })}
-            </div>
-          ) : (
-            <p className="text-[13px] text-[#1A1A2E]/45">Завантаження категорій…</p>
-          )}
-          <Link
-            to={ROUTES.services}
-            onClick={onNavigate}
-            className="inline-flex items-center gap-1.5 mt-4 text-[13px] font-bold text-[#f97171] no-underline hover:underline"
-          >
-            Дивитись весь прайс →
-          </Link>
-        </div>
-
-        <div className="border-t lg:border-t-0 lg:border-l border-[#1A1A2E]/08 pt-4 lg:pt-0 lg:pl-6">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E]/40 mb-3">
-            Послуги ({allServices.length || "…"})
-          </p>
-          {allServices.length > 0 ? (
-            <ul className="space-y-0.5 max-h-[320px] overflow-y-auto pr-1">
-              {allServices.map((svc) => (
-                <li key={svc.url}>
-                  <Link
-                    to={svc.url}
-                    onClick={onNavigate}
-                    className="block rounded-xl px-3 py-2 hover:bg-white/55 transition-colors no-underline group"
-                  >
-                    <span className="block text-[13px] font-semibold text-[#1A1A2E] group-hover:text-[#f97171] line-clamp-1">
-                      {svc.name}
-                    </span>
-                    <span className="block text-[11px] text-[#1A1A2E]/45">
-                      {svc.categoryTitle} · {svc.price}
-                    </span>
-                  </Link>
-                </li>
-              ))}
             </ul>
           ) : (
-            <p className="text-[13px] text-[#1A1A2E]/45">Завантаження…</p>
+            <p className="mega-menu__empty">Завантаження…</p>
           )}
-        </div>
+        </aside>
 
-        <div className="border-t lg:border-t-0 lg:border-l border-[#1A1A2E]/08 pt-4 lg:pt-0 lg:pl-6">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-[#1A1A2E]/40 mb-3">Швидко</p>
-          <ul className="space-y-1">
-            {serviceLinks.map((link) => (
-              <li key={link.href}>
+        <section className="mega-menu__stage" aria-live="polite">
+          {active ? (
+            <>
+              <div className="mega-menu__stage-head">
+                <div className="mega-menu__stage-mark" aria-hidden>
+                  <CategoryIcon src={active.iconUrl} size={36} alt="" />
+                </div>
+                <div className="min-w-0">
+                  <p className="mega-menu__stage-label">Обрана категорія</p>
+                  <h3 className="mega-menu__stage-title">{active.title}</h3>
+                  <p className="mega-menu__stage-meta">
+                    {subs.length > 0
+                      ? `${subs.length} напрямів`
+                      : serviceCount > 0
+                        ? `${serviceCount} послуг`
+                        : "Перейти до прайсу"}
+                  </p>
+                </div>
+              </div>
+
+              {subs.length > 0 ? (
+                <ul className="mega-menu__subs">
+                  {subs.map((sub) => (
+                    <li key={sub.id}>
+                      <Link
+                        to={categoryUrl(sub.id)}
+                        onClick={onNavigate}
+                        className="mega-menu__sub"
+                      >
+                        <span>{sub.title}</span>
+                        <span className="mega-menu__sub-arrow" aria-hidden>
+                          →
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mega-menu__hint">
+                  Відкрийте категорію, щоб побачити послуги та ціни в каталозі.
+                </p>
+              )}
+
+              <div className="mega-menu__actions">
                 <Link
-                  to={link.href}
+                  to={categoryUrl(active.id)}
                   onClick={onNavigate}
-                  className="block rounded-xl px-3 py-2 hover:bg-white/55 transition-colors no-underline group"
+                  className="mega-menu__cta"
                 >
-                  <span className="block text-[13px] font-semibold text-[#1A1A2E] group-hover:text-[#f97171]">
-                    {link.label}
-                  </span>
+                  Відкрити категорію
+                  <span aria-hidden>→</span>
                 </Link>
-              </li>
-            ))}
-            {companyLinks.slice(0, 3).map((link) => (
-              <li key={link.href}>
-                <Link
-                  to={link.href}
-                  onClick={onNavigate}
-                  className="block rounded-xl px-3 py-2 hover:bg-white/55 transition-colors no-underline group"
-                >
-                  <span className="block text-[13px] font-semibold text-[#1A1A2E] group-hover:text-[#f97171]">
-                    {link.label}
-                  </span>
+                <Link to={ROUTES.services} onClick={onNavigate} className="mega-menu__ghost">
+                  Весь прайс
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+              </div>
+            </>
+          ) : (
+            <p className="mega-menu__empty">Оберіть категорію зліва</p>
+          )}
+        </section>
       </div>
+
+      <footer className="mega-menu__foot">
+        <nav className="mega-menu__quick" aria-label="Швидкі посилання">
+          {QUICK.map((link) => (
+            <Link key={link.href} to={link.href} onClick={onNavigate} className="mega-menu__quick-link">
+              {link.label}
+            </Link>
+          ))}
+        </nav>
+        <a href="tel:+380678872233" className="mega-menu__phone">
+          067 887 22 33
+        </a>
+      </footer>
     </div>
   );
 }

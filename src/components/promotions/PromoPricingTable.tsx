@@ -1,5 +1,6 @@
 import type { Promotion } from "@/lib/promotions";
 import { openFeedbackModal } from "@/context/FeedbackContext";
+import PromoServicesBlock from "./PromoServicesBlock";
 
 type Props = {
   promo: Promotion;
@@ -30,9 +31,11 @@ export default function PromoDetailCard({ promo }: Props) {
         </div>
       )}
 
+      <PromoServicesBlock services={promo.services ?? []} />
+
       <div className="promo-detail-actions">
         <button type="button" onClick={openFeedbackModal} className="promo-cta promo-cta--primary promo-cta--wide">
-          Додати до замовлення
+          Залишити заявку
         </button>
         <button type="button" onClick={openFeedbackModal} className="promo-cta promo-cta--ghost">
           <TruckIcon />

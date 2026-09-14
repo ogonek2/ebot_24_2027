@@ -10,29 +10,16 @@ export default function DeliveryPricingSection() {
         <Reveal>
           <div className="glass-strong rounded-[32px] p-6 sm:p-10">
             <div className="tag-badge mb-4 w-fit">Важливо</div>
-            <ul className="space-y-4 text-[15px] text-[#1A1A2E]/70 leading-relaxed">
-              <li className="flex gap-3">
-                <CategoryIcon name="promo" size={24} alt="" className="shrink-0 mt-0.5" fallback />
-                <span>
-                  Якщо ліфт не працює, забір або доставка замовлення до 3-го поверху —{" "}
-                  <strong className="text-[#1A1A2E]">безкоштовно</strong>
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <CategoryIcon name="location" size={24} alt="" className="shrink-0 mt-0.5" fallback />
-                <span>
-                  Підйом замовлення до дверей — <strong className="text-[#1A1A2E]">25 грн/поверх</strong>
-                </span>
-              </li>
-              <li className="flex gap-3">
-                <CategoryIcon name="chat" size={24} alt="" className="shrink-0 mt-0.5" fallback />
-                <span>Вартість доставки за межі міста уточнюйте при замовленні</span>
-              </li>
-            </ul>
+            <p className="text-[15px] sm:text-[16px] text-[#1A1A2E]/75 leading-relaxed flex gap-3 items-start">
+              <CategoryIcon name="chat" size={24} alt="" className="shrink-0 mt-0.5" fallback />
+              <span>
+                Вартість доставки уточнюйте при замовленні.
+              </span>
+            </p>
 
             <div className="mt-8 pt-6 border-t border-white/40">
               <h3 className="font-bold text-[18px] text-[#1A1A2E] mb-2">
-                Бажаєте замовити кур'єра або залишились питання?
+                Бажаєте замовити кур&apos;єра або залишились питання?
               </h3>
               <p className="text-[14px] text-[#1A1A2E]/50 mb-4">
                 Залиште заявку — відповімо швидко

@@ -6,12 +6,18 @@ export type CatalogItemExt = CatalogItem & {
   categoryHref?: string;
   serviceHref?: string;
   marker?: string | null;
+  seoDescription?: string | null;
+  oldPrice?: string | null;
+  individualOldPrice?: string | null;
+  discountPercent?: number | null;
+  individualDiscountPercent?: number | null;
 };
 
 export type CatalogCategoryExt = Omit<CatalogCategory, "icon"> & {
   icon?: IconName;
   iconUrl?: string | null;
   items: CatalogItemExt[];
+  repairPriceList?: import("@/lib/bootstrap").SpaRepairPriceList | null;
 };
 
 export type CatalogSubGroup = {
@@ -27,6 +33,7 @@ export type CatalogNode = {
   iconUrl?: string | null;
   items: CatalogItemExt[];
   subgroups: CatalogSubGroup[];
+  repairPriceList?: import("@/lib/bootstrap").SpaRepairPriceList | null;
 };
 
 export type FlatRow = {

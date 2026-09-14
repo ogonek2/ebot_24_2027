@@ -10,7 +10,9 @@ import path from "node:path";
  */
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const apiTarget = env.VITE_API_PROXY ?? "http://127.0.0.1:8000";
+  // Prefer remote/local API URL for proxy when set (storage + optional same-origin paths)
+  const apiTarget =
+    (env.VITE_API_URL || env.VITE_API_PROXY || "http://127.0.0.1:8000").replace(/\/$/, "");
   const isLaravel = mode === "laravel";
 
   return {
@@ -36,11 +38,11 @@ export default defineConfig(({ mode }) => {
     server: {
       host: "127.0.0.1",
       port: 5173,
+      strictPort: true,
       proxy: {
         "/api": { target: apiTarget, changeOrigin: true },
         "/sanctum": { target: apiTarget, changeOrigin: true },
         "/storage": { target: apiTarget, changeOrigin: true },
-        "/fonts": { target: apiTarget, changeOrigin: true },
         "/manifest.webmanifest": { target: apiTarget, changeOrigin: true },
         "/sw.js": { target: apiTarget, changeOrigin: true },
       },

@@ -11,6 +11,7 @@ import ConsoleHeader from "./ConsoleHeader";
 import DenseList, { cartKey } from "./DenseList";
 import InspectorPanel, { MobileInspectorSheet } from "./InspectorPanel";
 import MobileCatalogBar from "./MobileCatalogBar";
+import RepairPriceListView from "./RepairPriceListView";
 import type {
   CartLine,
   CatalogCategoryExt,
@@ -48,7 +49,12 @@ export default function CatalogConsole({
       ? findCategory(all, bootstrap.activeCategory)
       : undefined;
     const source =
-      activeSub?.parentId != null ? [activeSub] : topLevelCategories(all);
+      activeSub?.parentId != null
+        ? [activeSub]
+        : [
+            ...topLevelCategories(all),
+            ...all.filter((c) => Boolean(c.parentId && c.repairPriceList)),
+          ];
 
     if (source.length) {
       return source.map((c) => ({
@@ -61,12 +67,17 @@ export default function CatalogConsole({
           priceBatch: item.priceBatch ?? item.price,
           individualPrice: item.individualPrice ?? null,
           oldPrice: item.oldPrice ?? undefined,
+          individualOldPrice: item.individualOldPrice ?? null,
+          discountPercent: item.discountPercent ?? null,
+          individualDiscountPercent: item.individualDiscountPercent ?? null,
           promo: item.promo,
           marker: item.marker,
+          seoDescription: item.seoDescription ?? null,
           serviceId: item.id,
           categoryHref: item.categoryHref,
           serviceHref: item.href,
         })),
+        repairPriceList: c.repairPriceList ?? null,
       }));
     }
     return fallbackCatalog as CatalogCategoryExt[];
@@ -75,7 +86,7 @@ export default function CatalogConsole({
   const nodes = useMemo(() => buildCatalogNodes(catalog), [catalog]);
   const [selectionId, setSelectionId] = useState(nodes[0]?.id ?? "");
   const [query, setQuery] = useState("");
-  const [filters, setFilters] = useState<CatalogFilters>(DEFAULT_FILTERS);
+  const [filters] = useState<CatalogFilters>(DEFAULT_FILTERS);
   const [density, setDensity] = useState<DensityMode>("comfortable");
   const [railCollapsed, setRailCollapsed] = useState(false);
   const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
@@ -83,6 +94,18 @@ export default function CatalogConsole({
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [cart, setCart] = useState<CartLine[]>([]);
   const [toast, setToast] = useState<string | null>(null);
+
+  const repairSelection = useMemo(() => {
+    const direct = nodes.find((n) => n.id === selectionId && n.repairPriceList);
+    if (direct?.repairPriceList) return direct;
+    for (const n of nodes) {
+      const sg = n.subgroups.find((s) => s.id === selectionId);
+      if (sg && /ремонт/i.test(sg.title)) {
+        return nodes.find((x) => x.repairPriceList) ?? null;
+      }
+    }
+    return null;
+  }, [nodes, selectionId]);
 
   useEffect(() => {
     if (nodes.length && !nodes.some((n) => n.id === selectionId || n.subgroups.some((sg) => sg.id === selectionId))) {
@@ -183,10 +206,6 @@ export default function CatalogConsole({
     }
   };
 
-  const toggleFilter = (key: keyof CatalogFilters) => {
-    setFilters((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
   return (
     <div className={variant === "page" ? "cc-root cc-root--page" : "cc-root"}>
       <div className={`flex flex-col lg:flex-row lg:items-end lg:justify-between gap-3 ${variant === "section" ? "mb-5" : suppressHeading ? "mb-4" : "mb-6"}`}>
@@ -215,8 +234,6 @@ export default function CatalogConsole({
               onSelectCategory={selectCategory}
               query={query}
               onQueryChange={setQuery}
-              filters={filters}
-              onToggleFilter={toggleFilter}
               resultCount={rows.length}
               cartCount={cart.length}
               onCheckout={() => onCheckout?.(cart)}
@@ -229,8 +246,6 @@ export default function CatalogConsole({
               onSelectCategory={selectCategory}
               query={query}
               onQueryChange={setQuery}
-              filters={filters}
-              onToggleFilter={toggleFilter}
               density={density}
               onDensityChange={setDensity}
               resultCount={rows.length}
@@ -261,6 +276,15 @@ export default function CatalogConsole({
             onHover={setSelectedRow}
             onSelect={handleSelectRow}
             onAdd={addRow}
+            topSlot={
+              repairSelection?.repairPriceList ? (
+                <RepairPriceListView
+                  list={repairSelection.repairPriceList}
+                  variant="panel"
+                  categoryHref={repairSelection.id}
+                />
+              ) : null
+            }
           />
 
           <InspectorPanel

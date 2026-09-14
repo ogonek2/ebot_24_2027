@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 export type PickupLocation = {
   id: number;
   street: string;
+  district?: string | null;
   city: string;
   working_hours: string;
 };
@@ -25,7 +26,7 @@ export default function PickupLocationSelect({ locations, value, onChange, requi
     const q = search.trim().toLowerCase();
     if (!q) return locations;
     return locations.filter((loc) => {
-      const hay = `${loc.street} ${loc.city} ${loc.working_hours}`.toLowerCase();
+      const hay = `${loc.street} ${loc.district ?? ""} ${loc.city} ${loc.working_hours}`.toLowerCase();
       return hay.includes(q);
     });
   }, [locations, search]);
@@ -43,7 +44,7 @@ export default function PickupLocationSelect({ locations, value, onChange, requi
   }, [open]);
 
   const displayText = selected
-    ? `${selected.street}, ${selected.city}${selected.working_hours ? ` (${selected.working_hours})` : ""}`
+    ? `${selected.street}${selected.district ? ` (${selected.district})` : ""}, ${selected.city}${selected.working_hours ? ` · ${selected.working_hours}` : ""}`
     : "Оберіть приймальний пункт…";
 
   return (
@@ -87,6 +88,9 @@ export default function PickupLocationSelect({ locations, value, onChange, requi
                   }}
                 >
                   <span className="pickup-select__option-street">{loc.street}</span>
+                  {loc.district && (
+                    <span className="text-[11px] font-semibold text-[#f97171]">{loc.district}</span>
+                  )}
                   <span className="pickup-select__option-city">{loc.city}</span>
                   {loc.working_hours && (
                     <span className="pickup-select__option-hours">{loc.working_hours}</span>

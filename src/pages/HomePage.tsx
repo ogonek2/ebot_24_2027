@@ -2,7 +2,6 @@ import HeroSection from "../components/HeroSection";
 import CategoriesSection from "../components/CategoriesSection";
 import ServicesSection from "../components/ServicesSection";
 import PromoSection from "../components/PromoSection";
-import AdvantagesSection from "../components/AdvantagesSection";
 import ConsultationSection from "../components/ConsultationSection";
 import BlogSection from "../components/BlogSection";
 import DeliveryPricingSection from "../components/DeliveryPricingSection";
@@ -26,7 +25,6 @@ export default function HomePage() {
       <PromoSection />
       <ServicesSection />
       <CategoriesSection />
-      <AdvantagesSection />
       <ConsultationSection />
       <BlogSection />
       <DeliveryPricingSection />

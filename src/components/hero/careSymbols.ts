@@ -57,14 +57,14 @@ export type OrbitPlanetSlot = {
 };
 
 const SLOT_BLUEPRINT: Array<Omit<OrbitPlanetSlot, "symbol" | "phase">> = [
-  { slotId: "in-1", radiusPct: 24, duration: "48s", angle: 15, size: 62 },
-  { slotId: "in-2", radiusPct: 24, duration: "48s", angle: 195, size: 70 },
-  { slotId: "mid-1", radiusPct: 36, duration: "62s", reverse: true, angle: 55, size: 74 },
-  { slotId: "mid-2", radiusPct: 36, duration: "62s", reverse: true, angle: 200, size: 66 },
-  { slotId: "mid-3", radiusPct: 36, duration: "62s", reverse: true, angle: 310, size: 78 },
-  { slotId: "out-1", radiusPct: 47, duration: "84s", angle: 30, size: 80 },
-  { slotId: "out-2", radiusPct: 47, duration: "84s", angle: 145, size: 72 },
-  { slotId: "out-3", radiusPct: 47, duration: "84s", angle: 260, size: 76 },
+  { slotId: "in-1", radiusPct: 18, duration: "48s", angle: 15, size: 56 },
+  { slotId: "in-2", radiusPct: 18, duration: "48s", angle: 195, size: 62 },
+  { slotId: "mid-1", radiusPct: 27, duration: "62s", reverse: true, angle: 55, size: 64 },
+  { slotId: "mid-2", radiusPct: 27, duration: "62s", reverse: true, angle: 200, size: 58 },
+  { slotId: "mid-3", radiusPct: 27, duration: "62s", reverse: true, angle: 310, size: 66 },
+  { slotId: "out-1", radiusPct: 36, duration: "84s", angle: 30, size: 68 },
+  { slotId: "out-2", radiusPct: 36, duration: "84s", angle: 145, size: 62 },
+  { slotId: "out-3", radiusPct: 36, duration: "84s", angle: 260, size: 66 },
 ];
 
 export function shuffleCareSymbols(pool = CARE_SYMBOLS): CareSymbol[] {

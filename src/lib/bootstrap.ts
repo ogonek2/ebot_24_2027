@@ -7,8 +7,35 @@ export type SpaCatalogItem = {
   priceBatch?: string;
   individualPrice?: string | null;
   oldPrice?: string | null;
+  individualOldPrice?: string | null;
+  discountPercent?: number | null;
+  individualDiscountPercent?: number | null;
   promo?: boolean;
   marker?: string | null;
+  seoDescription?: string | null;
+};
+
+export type SpaRepairPriceItem = {
+  id: number;
+  name: string;
+  price: number;
+  priceLabel: string;
+  pricePrefix?: string | null;
+  note?: string | null;
+  unit?: string | null;
+};
+
+export type SpaRepairPriceSection = {
+  id: number;
+  title: string;
+  items: SpaRepairPriceItem[];
+};
+
+export type SpaRepairPriceList = {
+  id: number;
+  title: string;
+  categoryHref?: string | null;
+  sections: SpaRepairPriceSection[];
 };
 
 export type SpaCatalogCategory = {
@@ -19,6 +46,7 @@ export type SpaCatalogCategory = {
   iconUrl?: string | null;
   serviceCount?: number;
   items: SpaCatalogItem[];
+  repairPriceList?: SpaRepairPriceList | null;
 };
 
 export type SpaDiscount = {
@@ -37,6 +65,7 @@ export type SpaBranch = {
   id: number;
   city: string;
   address: string;
+  district?: string | null;
   workingHours: string;
   image?: string | null;
   linkMap?: string | null;
@@ -49,6 +78,7 @@ export type SpaBranch = {
 export type SpaLocationPoint = {
   id: number;
   street: string;
+  district?: string | null;
   value?: string | null;
   workingHours?: string | null;
   linkMap?: string | null;

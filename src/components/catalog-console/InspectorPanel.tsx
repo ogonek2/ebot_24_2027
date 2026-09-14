@@ -101,6 +101,7 @@ function InspectorBody({
   const onRequest = cleaning.isOnRequest;
   const bullets = inspectorBullets(item, subgroup.title);
   const priceTileCount = Number(cleaning.hasIndividual) + Number(cleaning.hasStream);
+  const shortDescription = item.seoDescription?.trim() || "";
 
   return (
     <div className={`flex flex-col ${compact ? "p-4" : ""}`}>
@@ -124,33 +125,46 @@ function InspectorBody({
             <div className="cc-price-tile">
               <div className="text-[10px] font-bold uppercase tracking-wide text-[#1A1A2E]/40 mb-1">
                 Індивідуальна
+                {item.individualDiscountPercent ? (
+                  <span className="ml-1 text-[var(--cc-accent)]">−{item.individualDiscountPercent}%</span>
+                ) : null}
               </div>
               <div className="text-[18px] font-black tabular-nums text-[var(--cc-accent)]">
                 {formatPriceCompact(cleaning.individualRaw!)}
               </div>
+              {item.individualOldPrice && (
+                <div className="text-[12px] text-[#1A1A2E]/35 line-through tabular-nums mt-0.5">
+                  {formatPriceCompact(item.individualOldPrice)}
+                </div>
+              )}
             </div>
           )}
           {cleaning.hasStream && (
             <div className="cc-price-tile">
               <div className="text-[10px] font-bold uppercase tracking-wide text-[#1A1A2E]/40 mb-1">
                 Потокова
+                {item.discountPercent ? (
+                  <span className="ml-1 text-[var(--cc-accent)]">−{item.discountPercent}%</span>
+                ) : null}
               </div>
               <div className="text-[18px] font-black tabular-nums text-[#1A1A2E]">
                 {formatPriceCompact(cleaning.streamRaw!)}
               </div>
+              {item.oldPrice && (
+                <div className="text-[12px] text-[#1A1A2E]/35 line-through tabular-nums mt-0.5">
+                  {formatPriceCompact(item.oldPrice)}
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      <ul className="space-y-1.5 text-[13px] text-[#1A1A2E]/65">
-        {bullets.map((b) => (
-          <li key={b} className="flex gap-2">
-            <span className="text-[var(--cc-accent)]">·</span>
-            <span>{b}</span>
-          </li>
-        ))}
-      </ul>
+      {shortDescription && (
+        <p className="text-[13px] text-[#1A1A2E]/65">
+          {shortDescription}
+        </p>
+      )}
 
       <div className="flex flex-wrap gap-1.5">
         {pricing.promo && <span className="cc-tag cc-tag--accent">Акція</span>}

@@ -1,7 +1,5 @@
-import { Link } from "react-router-dom";
-import { ROUTES } from "@/lib/routes";
-import { openFeedbackModal } from "@/context/FeedbackContext";
 import { useBootstrap } from "@/context/BootstrapContext";
+import { resolveStorageUrl } from "@/lib/assets";
 import logo from "@/logo/logo.svg";
 import logoWh from "@/logo/logo_wh.svg";
 
@@ -17,10 +15,11 @@ export default function RaccoonLogo({
   variant = "default",
 }: RaccoonLogoProps) {
   const { assets } = useBootstrap();
-  const src =
+  const remote =
     variant === "white"
-      ? assets?.logoFull ?? logoWh
-      : assets?.logo ?? logo;
+      ? resolveStorageUrl(assets?.logoFull)
+      : resolveStorageUrl(assets?.logo);
+  const src = remote ?? (variant === "white" ? logoWh : logo);
 
   return (
     <img

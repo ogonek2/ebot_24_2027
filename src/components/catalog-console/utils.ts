@@ -75,6 +75,7 @@ export function buildCatalogNodes(categories: CatalogCategoryExt[]): CatalogNode
     iconUrl: cat.iconUrl,
     items: cat.items,
     subgroups: inferSubgroups(cat.id, cat.title, cat.items),
+    repairPriceList: cat.repairPriceList ?? null,
   }));
 }
 

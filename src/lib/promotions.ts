@@ -2,6 +2,7 @@ export type Promotion = {
   id: number;
   name: string;
   discountAction?: string | null;
+  discountPercent?: number | null;
   locations?: string | null;
   banner?: string | null;
   color?: string | null;
@@ -9,6 +10,7 @@ export type Promotion = {
   discountColor?: string | null;
   url?: string;
   terms?: string | null;
+  services?: import("@/lib/bootstrap").SpaCatalogItem[];
 };
 
 export type PromoFilterId = "all" | "percent" | "fixed" | "weekly" | "carpets" | "clothing";

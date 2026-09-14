@@ -123,8 +123,7 @@ export default function FloatingDock() {
         />
       )}
 
-      <div
-        className={`fab-dock fixed z-[48] pointer-events-none ${entered ? "fab-dock--in" : ""}`}
+      <div className={`fab-dock fixed z-[48] pointer-events-none ${entered ? "fab-dock--in" : ""} ${menuOpen ? "fab-dock--open" : ""}`}
         aria-label="Швидкий доступ"
       >
         {menuOpen && (
@@ -134,22 +133,26 @@ export default function FloatingDock() {
         )}
 
         <div className="fab-dock__stack pointer-events-auto">
-          <button
-            type="button"
-            className="fab-dock__phone"
-            aria-label="Замовити консультацію"
-            onClick={openFeedbackModal}
-          >
-            <span className="fab-dock__phone-ring" aria-hidden />
-            <FontAwesomeIcon icon={faPhone} className="fab-dock__phone-icon" />
-            <span className="fab-dock__badge" aria-hidden>
-              <span className="fab-dock__badge-ping" />
-              <span className="fab-dock__badge-dot" />
-            </span>
-            <span className="fab-dock__hint">Консультація</span>
-          </button>
+          {!menuOpen && (
+            <>
+              <button
+                type="button"
+                className="fab-dock__phone"
+                aria-label="Замовити консультацію"
+                onClick={openFeedbackModal}
+              >
+                <span className="fab-dock__phone-ring" aria-hidden />
+                <FontAwesomeIcon icon={faPhone} className="fab-dock__phone-icon" />
+                <span className="fab-dock__badge" aria-hidden>
+                  <span className="fab-dock__badge-ping" />
+                  <span className="fab-dock__badge-dot" />
+                </span>
+                <span className="fab-dock__hint">Консультація</span>
+              </button>
 
-          <span className="fab-dock__divider" aria-hidden />
+              <span className="fab-dock__divider" aria-hidden />
+            </>
+          )}
 
           <button
             type="button"

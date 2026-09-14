@@ -166,7 +166,7 @@ function PanelCard({ title, onClose, onConsultation, children }: PanelCardProps)
 
             <div className="font-bold text-[13px] text-[#1A1A2E] leading-tight">{title}</div>
 
-            <div className="text-[11px] text-[#1A1A2E]/45">ЄНОТ 24 · швидкий доступ</div>
+            <div className="quick-actions-panel__sub text-[11px] text-[#1A1A2E]/45">ЄНОТ 24 · швидкий доступ</div>
 
           </div>
 
@@ -202,7 +202,7 @@ function PanelCard({ title, onClose, onConsultation, children }: PanelCardProps)
 
         onClick={onConsultation}
 
-        className="flex items-center justify-center gap-2 w-full rounded-2xl bg-[#1A1A2E] text-white py-3 text-[13px] font-bold mt-3"
+        className="qa-consult flex items-center justify-center gap-2 w-full rounded-2xl bg-[#1A1A2E] text-white py-3 text-[13px] font-bold mt-3"
 
       >
 
@@ -332,7 +332,11 @@ export default function QuickActionsPanel({ onClose, quickActions }: Props) {
 
         speed={320}
 
-        autoHeight
+        autoHeight={false}
+
+        observer
+
+        observeParents
 
         onSwiper={(s) => {
 
@@ -360,11 +364,11 @@ export default function QuickActionsPanel({ onClose, quickActions }: Props) {
 
                   onClick={a.action}
 
-                  className={`text-left rounded-2xl px-3 py-3 transition-all active:scale-[0.98] ${
+                  className={`text-left rounded-2xl px-3 py-3 transition-all active:scale-[0.98] qa-action ${
 
                     a.accent
 
-                      ? "bg-[#f97171] text-white shadow-md shadow-[#f97171]/30 col-span-2 flex items-center gap-3"
+                      ? "qa-action--accent bg-[#f97171] text-white shadow-md shadow-[#f97171]/30 col-span-2 flex items-center gap-3"
 
                       : "bg-white/55 hover:bg-white/80 border border-white/50"
 

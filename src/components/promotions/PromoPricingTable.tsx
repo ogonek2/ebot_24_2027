@@ -27,7 +27,10 @@ export default function PromoDetailCard({ promo }: Props) {
       {promo.terms && (
         <div className="promo-detail-terms">
           <h2>Умови акції</h2>
-          <div className="promo-detail-terms__body font-reading" dangerouslySetInnerHTML={{ __html: promo.terms }} />
+          <div
+            className="promo-detail-terms__body rich-text-content font-reading"
+            dangerouslySetInnerHTML={{ __html: promo.terms }}
+          />
         </div>
       )}
 

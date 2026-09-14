@@ -43,6 +43,10 @@ class LocationResource extends Resource
                             ->required()
                             ->rows(2)
                             ->maxLength(500),
+                        Forms\Components\TextInput::make('district')
+                            ->label('Район')
+                            ->maxLength(255)
+                            ->helperText('Наприклад: Печерський, Шевченківський'),
                         Forms\Components\Select::make('city')
                             ->label('Місто')
                             ->options(function () {
@@ -132,6 +136,11 @@ class LocationResource extends Resource
                     ->searchable()
                     ->limit(50)
                     ->sortable(),
+                Tables\Columns\TextColumn::make('district')
+                    ->label('Район')
+                    ->searchable()
+                    ->toggleable()
+                    ->placeholder('—'),
                 Tables\Columns\TextColumn::make('cityRelation.city')
                     ->label('Місто')
                     ->searchable()

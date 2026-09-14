@@ -272,6 +272,7 @@ class SpaBootstrap
             'oldPrice' => $hasDiscount ? number_format($originalPrice, 0, '.', ',') . '₴' : null,
             'promo' => $hasDiscount || !empty($service->marker),
             'marker' => $service->marker,
+            'seoDescription' => $service->seo_description ?: null,
         ];
     }
 
@@ -301,6 +302,7 @@ class SpaBootstrap
                 'id' => $loc->id,
                 'city' => $loc->cityRelation->city ?? 'Київ',
                 'address' => $loc->street,
+                'district' => $loc->district,
                 'workingHours' => $loc->workinghourse ?? '10:00-20:00 Без Вихідних',
                 'image' => self::storageUrl($loc->banner),
                 'linkMap' => $loc->link_map,
@@ -333,6 +335,7 @@ class SpaBootstrap
                     return [
                         'id' => $loc->id,
                         'street' => $loc->street,
+                        'district' => $loc->district,
                         'value' => $loc->value,
                         'workingHours' => $loc->workinghourse,
                         'linkMap' => $loc->link_map ?: (

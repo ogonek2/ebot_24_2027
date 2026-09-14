@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class locations extends Model
 {
     protected $fillable = [
-        'street', 'city', 'workinghourse', 'link_map', 'lat', 'lng', 'banner', 'value', 'seo_link', 'sort_order',
+        'street', 'district', 'city', 'workinghourse', 'link_map', 'lat', 'lng', 'banner', 'value', 'seo_link', 'sort_order',
     ];
 
     /**

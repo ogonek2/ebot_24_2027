@@ -101,6 +101,7 @@ class CatalogController extends Controller
                     'href' => $related->transform_url ?? $related->href,
                     'categoryHref' => $cat->href,
                     'price' => $serialized['price'],
+                    'shortDescription' => $serialized['seoDescription'] ?? '',
                 ];
             })
             ->values();

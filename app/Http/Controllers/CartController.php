@@ -314,7 +314,8 @@ class CartController extends Controller
                 return [
                     'id' => $location->id,
                     'street' => $location->street,
-                    'city' => $location->cityRelation->name ?? 'Невідомо',
+                    'district' => $location->district,
+                    'city' => $location->cityRelation->city ?? 'Невідомо',
                     'working_hours' => $location->workinghourse ?? '',
                 ];
             })

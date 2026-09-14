@@ -239,27 +239,32 @@ h6 {
   z-index: 1;
 }
 
-/* ─── Glass surfaces ─── */
+/* ─── Glass surfaces ───
+   IMPORTANT: keep -webkit-backdrop-filter BEFORE backdrop-filter.
+   LightningCSS production minify drops the unprefixed property when webkit
+   is declared after it (parcel-bundler/lightningcss#785), which kills blur
+   on Firefox / some Chromium builds on production only.
+*/
 .glass {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
 
 .glass-strong {
   background: var(--glass-bg-strong);
-  backdrop-filter: blur(calc(var(--glass-blur) + 8px)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(calc(var(--glass-blur) + 8px)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(calc(var(--glass-blur) + 8px)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
 }
 
 .glass-dark {
   background: rgba(26, 26, 46, 0.55);
-  backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
+  backdrop-filter: blur(28px) saturate(160%);
   border: 1px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 16px 48px rgba(0, 0, 0, 0.25);
   color: white;
@@ -268,8 +273,8 @@ h6 {
 .glass-peach,
 .glass-pink {
   background: linear-gradient(145deg, rgba(251, 159, 148, 0.48), rgba(249, 113, 113, 0.55));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid rgba(255, 255, 255, 0.38);
   box-shadow: 0 12px 40px rgba(249, 113, 113, 0.18);
   color: white;
@@ -277,15 +282,15 @@ h6 {
 
 .glass-icon {
   background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(14px) saturate(180%);
   -webkit-backdrop-filter: blur(14px) saturate(180%);
+  backdrop-filter: blur(14px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.42);
 }
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   border-radius: 28px;
   box-shadow: var(--glass-shadow);
@@ -322,8 +327,8 @@ h6 {
   padding: 10px 16px;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.38);
-  backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.5);
   box-shadow: 0 4px 16px rgba(26, 26, 46, 0.06);
   font-size: 13px;
@@ -365,8 +370,8 @@ h6 {
 
 .btn-outline {
   background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
   color: #f97171;
   border: 1.5px solid rgba(249, 113, 113, 0.35);
   border-radius: 999px;
@@ -460,8 +465,8 @@ h6 {
 
 .gradient-cta {
   background: linear-gradient(145deg, rgba(251, 159, 148, 0.48), rgba(249, 113, 113, 0.55));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid rgba(255, 255, 255, 0.38);
   box-shadow: 0 12px 40px rgba(249, 113, 113, 0.18);
   color: white;
@@ -469,8 +474,8 @@ h6 {
 
 .price-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(180%);
   -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
   border-radius: 24px;
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
@@ -488,8 +493,8 @@ h6 {
   align-items: center;
   gap: 6px;
   background: rgba(255, 255, 255, 0.32);
-  backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
   color: #f97171;
   border: 1px solid rgba(249, 113, 113, 0.2);
   border-radius: 999px;
@@ -739,8 +744,8 @@ h6 {
   align-items: center;
   justify-content: center;
   background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: 0 20px 60px rgba(249, 113, 113, 0.22);
 }
@@ -950,8 +955,8 @@ h6 {
   position: relative;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid rgba(255, 255, 255, 0.42);
 }
 
@@ -981,8 +986,8 @@ h6 {
   padding-inline: 16px;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.28);
-  backdrop-filter: blur(16px) saturate(180%);
   -webkit-backdrop-filter: blur(16px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.45);
   color: #1a1a2e;
   font-size: 14px;
@@ -1051,8 +1056,8 @@ h6 {
 .bottom-nav-shell.is-stock {
   border-radius: 0;
   box-shadow: 0 -1px 0 rgba(255, 255, 255, 0.5);
-  backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
   background: rgba(255, 255, 255, 0.72);
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-bottom: none;
@@ -1221,8 +1226,8 @@ h6 {
   border-radius: 28px;
   background:
     linear-gradient(155deg, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0.78) 48%, rgba(255, 246, 244, 0.88) 100%);
-  backdrop-filter: blur(28px) saturate(170%);
   -webkit-backdrop-filter: blur(28px) saturate(170%);
+  backdrop-filter: blur(28px) saturate(170%);
   border: 1px solid rgba(255, 255, 255, 0.78);
   box-shadow:
     0 28px 80px rgba(26, 26, 46, 0.12),
@@ -1621,8 +1626,8 @@ h6 {
   top: var(--cc-sticky-top);
   z-index: 30;
   background: rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(18px) saturate(180%);
   -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
   border-bottom: 1px solid rgba(255, 255, 255, 0.28);
   border-radius: 24px 24px 0 0;
 }
@@ -2210,8 +2215,8 @@ h6 {
   top: calc(var(--cc-sticky-top) + 123px);
   z-index: 5;
   background: rgba(255, 255, 255, 0.70);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
 }
 
 .cc-clean-info {
@@ -2296,8 +2301,8 @@ h6 {
   justify-content: center;
   padding: 16px;
   background: rgba(26, 26, 46, 0.42);
-  backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
 }
 
 .cc-clean-popup__dialog {
@@ -2468,8 +2473,8 @@ h6 {
   justify-content: center;
   padding: 20px;
   background: rgba(26, 26, 46, 0.48);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .cc-cat-modal__dialog {
@@ -2897,8 +2902,8 @@ h6 {
   position: absolute;
   inset: 0;
   background: rgba(26, 26, 46, 0.35);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   border: none;
   cursor: default;
 }
@@ -2913,8 +2918,8 @@ h6 {
   display: flex;
   flex-direction: column;
   background: rgba(255, 255, 255, 0.96);
-  backdrop-filter: blur(32px) saturate(180%);
   -webkit-backdrop-filter: blur(32px) saturate(180%);
+  backdrop-filter: blur(32px) saturate(180%);
   border-right: 1px solid rgba(255, 255, 255, 0.65);
   box-shadow: 8px 0 40px rgba(26, 26, 46, 0.16);
   animation: cc-drawer-in 0.32s var(--ease-apple) both;
@@ -3852,8 +3857,8 @@ h6 {
   border-radius: 22px;
   overflow: hidden;
   background: var(--promo-bg, var(--glass-bg));
-  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
+  backdrop-filter: blur(var(--glass-blur)) saturate(var(--glass-saturate));
   border: 1px solid var(--glass-border);
   box-shadow: var(--glass-shadow);
   transition:
@@ -6129,8 +6134,8 @@ h6 {
 /* ── Consultation modal (2027 glass style) ── */
 .feedback-modal__backdrop {
   background: rgba(26, 26, 46, 0.28);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .feedback-modal__dialog {
@@ -6169,8 +6174,8 @@ h6 {
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   color: rgba(26, 26, 46, 0.5);
   cursor: pointer;
   font-size: 0.85rem;
@@ -6374,8 +6379,8 @@ h6 {
 /* ── Scheduled promotion popups (2027 glass style) ── */
 .scheduled-popup__backdrop {
   background: rgba(26, 26, 46, 0.28);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
 }
 
 .scheduled-popup__dialog {
@@ -6406,8 +6411,8 @@ h6 {
   border: 1px solid rgba(255, 255, 255, 0.55);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
   color: rgba(26, 26, 46, 0.5);
   cursor: pointer;
   font-size: 0.85rem;
@@ -6736,8 +6741,8 @@ h6 {
   padding: 0.35rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(1.4);
   -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
   border: 1px solid rgba(255, 255, 255, 0.85);
   box-shadow:
     0 8px 32px rgba(26, 26, 46, 0.12),
@@ -6926,8 +6931,8 @@ h6 {
   margin-bottom: 0.5rem;
   border-radius: 18px;
   background: rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(14px) saturate(1.3);
   -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
   border: 1px solid rgba(255, 255, 255, 0.75);
   box-shadow: 0 6px 20px rgba(26, 26, 46, 0.1);
 }
@@ -7353,8 +7358,8 @@ h6 {
   inset: 0;
   border: none;
   background: rgba(26, 26, 46, 0.35);
-  backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   pointer-events: auto;
   animation: mobile-menu-fade 0.3s ease both;
 }
@@ -7386,8 +7391,8 @@ h6 {
   flex-direction: column;
   border-radius: 28px;
   background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  backdrop-filter: blur(24px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, 0.9);
   box-shadow:
     0 24px 64px rgba(26, 26, 46, 0.16),

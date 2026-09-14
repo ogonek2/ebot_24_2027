@@ -80,7 +80,7 @@ class BlogPostResource extends Resource
                             ->disk('public')
                             ->visibility('public')
                             ->nullable()
-                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl()),
+                            ->getUploadedFileUrlUsing(\App\Support\FilamentStorage::uploadedFileUrl())
                             ->columnSpanFull(),
                     ])
                     ->columns(2),

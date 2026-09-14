@@ -87,19 +87,24 @@ class PromotionResource extends Resource
                 
                 Forms\Components\Section::make('Опис акції')
                     ->schema([
-                        Forms\Components\Placeholder::make('umowy_info')
-                            ->label('Опис')
-                            ->content(new \Illuminate\Support\HtmlString('
-                                <div class="text-sm text-gray-600 mb-2">
-                                    <p>Використовуйте HTML для форматування тексту.</p>
-                                    <p>Наприклад: &lt;p&gt;Текст абзацу&lt;/p&gt;, &lt;strong&gt;Жирний текст&lt;/strong&gt;, &lt;ul&gt;&lt;li&gt;Елемент списку&lt;/li&gt;&lt;/ul&gt;</p>
-                                </div>
-                            ')),
-                        
-                        Forms\Components\Textarea::make('umowy')
-                            ->label('Опис акції (HTML)')
-                            ->rows(10)
-                            ->helperText('HTML опис акції, який відображається на сторінці акції')
+                        Forms\Components\RichEditor::make('umowy')
+                            ->label('Контент акції')
+                            ->toolbarButtons([
+                                'bold',
+                                'italic',
+                                'underline',
+                                'strike',
+                                'bulletList',
+                                'orderedList',
+                                'blockquote',
+                                'link',
+                                'h2',
+                                'h3',
+                                'codeBlock',
+                                'undo',
+                                'redo',
+                            ])
+                            ->helperText('Повний опис і умови акції — відображається на сторінці акції')
                             ->columnSpanFull(),
                     ]),
                 

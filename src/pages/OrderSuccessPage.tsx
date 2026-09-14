@@ -145,15 +145,21 @@ export default function OrderSuccessPage() {
               </thead>
               <tbody>
                 {order.items.map((item) => (
-                  <tr key={`${item.service_id}-${item.cleaning_type}`}>
+                  <tr key={`${item.repair_item_id ?? item.service_id}-${item.cleaning_type}-${item.service_name}`}>
                     <td>
                       <div className="font-semibold">{item.service_name}</div>
                       <div className="text-[12px] text-[#1A1A2E]/45">{item.category_name}</div>
                     </td>
                     <td className="text-center">{cleaningTypeLabel(item.cleaning_type)}</td>
                     <td className="text-center">{item.quantity}</td>
-                    <td className="text-right">{formatUah(item.price)}</td>
-                    <td className="text-right font-semibold">{formatUah(item.total)}</td>
+                    <td className="text-right">
+                      {item.price_from ? "від " : ""}
+                      {formatUah(item.price)}
+                    </td>
+                    <td className="text-right font-semibold">
+                      {item.price_from ? "від " : ""}
+                      {formatUah(item.total)}
+                    </td>
                   </tr>
                 ))}
               </tbody>

@@ -26,6 +26,8 @@ export type CatalogConsoleProps = {
   variant?: "section" | "page";
   onCheckout?: (cart: CartLine[]) => void;
   suppressHeading?: boolean;
+  /** Category href from the route — keeps the table in sync with mega-menu / URL */
+  focusCategoryId?: string;
 };
 
 const DEFAULT_FILTERS: CatalogFilters = {
@@ -39,22 +41,30 @@ export default function CatalogConsole({
   variant = "section",
   onCheckout,
   suppressHeading = false,
+  focusCategoryId,
 }: CatalogConsoleProps) {
   const bootstrap = useBootstrap();
   const { openAddModal } = useCart();
   const listRef = useRef<HTMLDivElement>(null);
   const catalog = useMemo((): CatalogCategoryExt[] => {
     const all = bootstrap.categories ?? [];
-    const activeSub = bootstrap.activeCategory
-      ? findCategory(all, bootstrap.activeCategory)
-      : undefined;
-    const source =
-      activeSub?.parentId != null
-        ? [activeSub]
-        : [
-            ...topLevelCategories(all),
-            ...all.filter((c) => Boolean(c.parentId && c.repairPriceList)),
-          ];
+    const focusId = focusCategoryId || bootstrap.activeCategory || undefined;
+    const focusCat = focusId ? findCategory(all, focusId) : undefined;
+
+    let source: typeof all;
+    if (focusCat) {
+      if (focusCat.parentId != null) {
+        source = [focusCat];
+      } else {
+        const children = all.filter((c) => c.parentId === focusCat.id);
+        source = children.length ? [focusCat, ...children] : [focusCat];
+      }
+    } else {
+      source = [
+        ...topLevelCategories(all),
+        ...all.filter((c) => Boolean(c.parentId && c.repairPriceList)),
+      ];
+    }
 
     if (source.length) {
       return source.map((c) => ({
@@ -81,7 +91,7 @@ export default function CatalogConsole({
       }));
     }
     return fallbackCatalog as CatalogCategoryExt[];
-  }, [bootstrap.categories, bootstrap.activeCategory]);
+  }, [bootstrap.categories, bootstrap.activeCategory, focusCategoryId]);
 
   const nodes = useMemo(() => buildCatalogNodes(catalog), [catalog]);
   const [selectionId, setSelectionId] = useState(nodes[0]?.id ?? "");
@@ -114,11 +124,27 @@ export default function CatalogConsole({
   }, [nodes, selectionId]);
 
   useEffect(() => {
-    const active = bootstrap.activeCategory;
+    const active = focusCategoryId || bootstrap.activeCategory;
     if (!active || !nodes.length) return;
-    const match = nodes.find((n) => n.id === active);
-    if (match) setSelectionId(match.id);
-  }, [bootstrap.activeCategory, nodes]);
+
+    const direct = nodes.find((n) => n.id === active);
+    if (direct) {
+      setSelectionId(direct.id);
+      return;
+    }
+
+    // URL points at a parent that was expanded into children-only list, or a subgroup id
+    for (const n of nodes) {
+      if (n.subgroups.some((sg) => sg.id === active)) {
+        setSelectionId(active);
+        return;
+      }
+    }
+
+    // Prefer first child when focusing a parent that isn't itself a node
+    const childOfFocus = nodes.find((n) => n.id !== active && findCategory(bootstrap.categories ?? [], n.id)?.parentId === active);
+    if (childOfFocus) setSelectionId(childOfFocus.id);
+  }, [focusCategoryId, bootstrap.activeCategory, bootstrap.categories, nodes]);
 
   useEffect(() => {
     if (!toast) return;

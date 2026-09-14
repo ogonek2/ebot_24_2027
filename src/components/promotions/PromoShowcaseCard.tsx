@@ -50,16 +50,6 @@ export default function PromoShowcaseCard({ promo, index = 0, layout }: Props) {
             <div className="promo-showcase__discount">{promo.discountAction}</div>
           )}
         </div>
-
-        <div className="promo-showcase__foot">
-          {promo.locations && <span className="promo-showcase__loc">{promo.locations}</span>}
-          <span className="promo-showcase__cta">
-            Детальніше
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" aria-hidden>
-              <path d="M5 12h14M13 6l6 6-6 6" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </span>
-        </div>
       </div>
     </Link>
   );

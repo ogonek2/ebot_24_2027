@@ -19,7 +19,7 @@ export default function CategoriesSection() {
       <div className="site-container">
         {ctaHeaders.length > 0 && (
           <Reveal>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-12 sm:mb-14">
+            <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-12 sm:mb-14">
               {ctaHeaders.map((item, i) => {
                 const inner = (
                   <>

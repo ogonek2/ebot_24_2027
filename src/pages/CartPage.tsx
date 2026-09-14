@@ -245,6 +245,7 @@ export default function CartPage() {
                       <div className="text-[12px] text-[#1A1A2E]/45">{item.category_name}</div>
                       <div className="text-[12px] text-[#1A1A2E]/45">
                         Тип: {cleaningTypeLabel(item.cleaning_type)}
+                        {item.price_from ? " · орієнтовно «від»" : ""}
                       </div>
                     </div>
                     <button
@@ -276,9 +277,13 @@ export default function CartPage() {
                     </div>
                     <div className="text-right">
                       <div className="text-[12px] text-[#1A1A2E]/45">
+                        {item.price_from ? "від " : ""}
                         {formatUah(item.price)} × {item.quantity}
                       </div>
-                      <div className="font-bold text-[#f97171]">{formatUah(item.total)}</div>
+                      <div className="font-bold text-[#f97171]">
+                        {item.price_from ? "від " : ""}
+                        {formatUah(item.total)}
+                      </div>
                     </div>
                   </div>
                 </li>

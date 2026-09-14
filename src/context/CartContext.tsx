@@ -7,8 +7,8 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { addToCart as apiAddToCart, getCart, type CartItem } from "@/lib/api";
-import type { AddToCartTarget } from "@/lib/cartPrices";
+import { addToCart as apiAddToCart, addRepairToCart, getCart, type CartItem } from "@/lib/api";
+import { isRepairCartTarget, type AddToCartTarget } from "@/lib/cartPrices";
 import AddToCartModal from "@/components/cart/AddToCartModal";
 import CartToast from "@/components/cart/CartToast";
 
@@ -70,9 +70,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const handleConfirmAdd = useCallback(
-    async (cleaningType: "individual" | "stream", quantity: number) => {
+    async (cleaningType: "individual" | "stream" | "repair", quantity: number) => {
       if (!modalTarget) return;
-      await apiAddToCart(modalTarget.serviceId, cleaningType, quantity);
+      if (isRepairCartTarget(modalTarget) && modalTarget.repairItemId) {
+        await addRepairToCart(modalTarget.repairItemId, quantity);
+      } else if (modalTarget.serviceId) {
+        const type = cleaningType === "repair" ? "stream" : cleaningType;
+        await apiAddToCart(modalTarget.serviceId, type, quantity);
+      } else {
+        throw new Error("Не вдалося додати до кошика");
+      }
       await refresh();
       showToast(modalTarget.serviceName);
       closeModal();

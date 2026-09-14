@@ -42,6 +42,7 @@ export default function CategoryPage() {
 
   const categoryData = findCategory(mergedCategories, category) ?? apiCategory?.category ?? null;
   const categoryTitle = categoryData?.title ?? category;
+  const repairList = categoryData?.repairPriceList ?? null;
   const pending = (loading || isRefreshing || apiLoading) && !categoryData;
 
   if (pending) {
@@ -66,27 +67,31 @@ export default function CategoryPage() {
         <Breadcrumbs items={buildCategoryBreadcrumbItems(mergedCategories, category)} />
 
         <div className="mb-6">
-          <div className="tag-badge mb-3 w-fit">Категорія</div>
+          <div className="tag-badge mb-3 w-fit">{repairList ? "Ремонт" : "Категорія"}</div>
           <h1 className="text-section text-[#1A1A2E] mb-2">{categoryTitle}</h1>
           <p className="text-[15px] text-[#1A1A2E]/55 max-w-2xl">
-            Актуальні ціни та послуги категорії «{categoryTitle}». Додайте потрібне в кошик і оформіть
-            замовлення онлайн.
+            {repairList
+              ? "Орієнтовний прайс на ремонт. Додайте потрібні позиції в кошик — точну вартість підтвердимо після огляду."
+              : `Актуальні ціни та послуги категорії «${categoryTitle}». Додайте потрібне в кошик і оформіть замовлення онлайн.`}
           </p>
         </div>
 
         <SubcategoryNav categories={mergedCategories} currentId={category} />
 
-        {categoryData.repairPriceList && (
-          <div className="mb-8">
-            <RepairPriceListView list={categoryData.repairPriceList} variant="page" categoryHref={category} />
-          </div>
+        {repairList ? (
+          <RepairPriceListView list={repairList} variant="page" categoryHref={category} />
+        ) : (
+          <PriceCatalog
+            variant="page"
+            suppressHeading
+            focusCategoryId={category}
+            onCheckout={() => navigate(ROUTES.cart)}
+          />
         )}
-
-        <PriceCatalog variant="page" suppressHeading onCheckout={() => navigate(ROUTES.cart)} />
 
         <div className="mt-10 text-center">
           <button type="button" onClick={openFeedbackModal} className="btn-primary px-8 py-4 text-[15px]">
-            Замовити хімчистку
+            {repairList ? "Записатись на ремонт" : "Замовити хімчистку"}
           </button>
           <p className="text-[13px] text-[#1A1A2E]/45 mt-4">
             Питання? Телефонуйте{" "}

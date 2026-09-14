@@ -9,10 +9,14 @@ export function formatUah(n: number): string {
 }
 
 export type AddToCartTarget = {
-  serviceId: number;
+  kind?: "service" | "repair";
+  serviceId?: number;
+  repairItemId?: number;
   serviceName: string;
   streamPrice: number;
   individualPrice: number | null;
+  /** Орієнтовна ціна «від» (ремонт) */
+  priceFrom?: boolean;
   initialQuantity?: number;
 };
 
@@ -51,6 +55,7 @@ export function buildAddToCartTarget(input: {
   const availability = resolveCleaningAvailability(input);
   if (!availability.hasStream && !availability.hasIndividual) return null;
   return {
+    kind: "service",
     serviceId: input.serviceId,
     serviceName: input.serviceName,
     streamPrice: availability.streamPrice,
@@ -59,8 +64,32 @@ export function buildAddToCartTarget(input: {
   };
 }
 
+export function buildRepairAddToCartTarget(input: {
+  id: number;
+  name: string;
+  price: number;
+  pricePrefix?: string | null;
+  initialQuantity?: number;
+}): AddToCartTarget | null {
+  if (!isValidCartPrice(input.price)) return null;
+  return {
+    kind: "repair",
+    repairItemId: input.id,
+    serviceName: input.name,
+    streamPrice: input.price,
+    individualPrice: null,
+    priceFrom: Boolean(input.pricePrefix),
+    initialQuantity: input.initialQuantity,
+  };
+}
+
 export function cleaningTypeLabel(type: string): string {
+  if (type === "repair") return "Ремонт";
   return type === "individual" ? "Індивідуальна" : "Потокова";
+}
+
+export function isRepairCartTarget(target: AddToCartTarget | null | undefined): boolean {
+  return Boolean(target && (target.kind === "repair" || target.repairItemId));
 }
 
 export function isOnRequestPrice(price?: string | null): boolean {

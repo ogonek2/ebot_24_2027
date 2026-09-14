@@ -26,7 +26,9 @@ export function isOnRequest(price: string): boolean {
 
 export function formatPriceCompact(price: string): string {
   if (isOnRequest(price)) return "—";
-  return price.replace(/₴/g, "").trim();
+  const digits = price.replace(/₴/g, "").trim();
+  if (!digits) return "—";
+  return `${digits}₴`;
 }
 
 export function inferTermDays(categoryId: string, subgroupTitle: string, onRequest: boolean): number {

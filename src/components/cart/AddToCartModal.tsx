@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   formatUah,
+  isRepairCartTarget,
   resolveCleaningAvailability,
   type AddToCartTarget,
 } from "@/lib/cartPrices";
 
-type CleaningType = "stream" | "individual";
+type CleaningType = "stream" | "individual" | "repair";
 
 type Props = {
   open: boolean;
@@ -20,21 +21,29 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isRepair = isRepairCartTarget(target);
+
   const availability = useMemo(
-    () => (target ? resolveCleaningAvailability(target) : null),
-    [target],
+    () => (target && !isRepair ? resolveCleaningAvailability(target) : null),
+    [target, isRepair],
   );
 
-  const unitPrice =
-    cleaningType === "individual" && availability?.hasIndividual
+  const unitPrice = isRepair
+    ? target?.streamPrice ?? 0
+    : cleaningType === "individual" && availability?.hasIndividual
       ? availability.individualPrice ?? 0
       : availability?.streamPrice ?? 0;
   const total = unitPrice * quantity;
-  const showTypePicker = Boolean(availability?.hasStream && availability?.hasIndividual);
+  const showTypePicker = Boolean(!isRepair && availability?.hasStream && availability?.hasIndividual);
+  const priceLabel = target?.priceFrom ? `від ${formatUah(unitPrice)}` : formatUah(unitPrice);
 
   useEffect(() => {
-    if (!open || !target || !availability) return;
-    setCleaningType(availability.defaultType);
+    if (!open || !target) return;
+    if (isRepair) {
+      setCleaningType("repair");
+    } else if (availability) {
+      setCleaningType(availability.defaultType);
+    }
     setQuantity(target.initialQuantity ?? 1);
     setError(null);
     setSubmitting(false);
@@ -42,7 +51,7 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
     return () => {
       document.body.style.overflow = "";
     };
-  }, [open, target, availability]);
+  }, [open, target, availability, isRepair]);
 
   useEffect(() => {
     if (!open) return;
@@ -53,16 +62,21 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
-  if (!open || !target || !availability) return null;
+  if (!open || !target) return null;
+  if (!isRepair && !availability) return null;
 
   const handleSubmit = async () => {
     setSubmitting(true);
     setError(null);
     try {
+      if (isRepair) {
+        await onConfirm("repair", quantity);
+        return;
+      }
       const type =
-        cleaningType === "individual" && availability.hasIndividual
+        cleaningType === "individual" && availability?.hasIndividual
           ? "individual"
-          : availability.hasStream
+          : availability?.hasStream
             ? "stream"
             : "individual";
       await onConfirm(type, quantity);
@@ -93,10 +107,15 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
         <p className="cart-modal__service">{target.serviceName}</p>
 
         <div className="cart-modal__section">
-          <p className="cart-modal__label">Тип чистки</p>
-          {showTypePicker ? (
+          <p className="cart-modal__label">{isRepair ? "Послуга" : "Тип чистки"}</p>
+          {isRepair ? (
+            <div className="cart-modal__single-type">
+              <span className="cart-modal__single-type-label">Ремонт</span>
+              <span className="cart-modal__single-type-price">{priceLabel} за одиницю</span>
+            </div>
+          ) : showTypePicker ? (
             <div className="cart-modal__options">
-              {availability.hasStream && (
+              {availability?.hasStream && (
                 <label
                   className={`cart-modal__option ${cleaningType === "stream" ? "cart-modal__option--active" : ""}`}
                 >
@@ -116,7 +135,7 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
                 </label>
               )}
 
-              {availability.hasIndividual && (
+              {availability?.hasIndividual && (
                 <label
                   className={`cart-modal__option ${cleaningType === "individual" ? "cart-modal__option--active" : ""}`}
                 >
@@ -139,10 +158,13 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
           ) : (
             <div className="cart-modal__single-type">
               <span className="cart-modal__single-type-label">
-                {availability.hasIndividual ? "Індивідуальна" : "Потокова"}
+                {availability?.hasIndividual ? "Індивідуальна" : "Потокова"}
               </span>
               <span className="cart-modal__single-type-price">{formatUah(unitPrice)} за одиницю</span>
             </div>
+          )}
+          {isRepair && target.priceFrom && (
+            <p className="cart-modal__hint">Орієнтовна ціна «від». Точну суму підтвердимо після огляду.</p>
           )}
         </div>
 
@@ -171,7 +193,9 @@ export default function AddToCartModal({ open, target, onClose, onConfirm }: Pro
 
         <div className="cart-modal__total">
           <span className="cart-modal__total-label">Разом:</span>
-          <span className="cart-modal__total-value">{formatUah(total)}</span>
+          <span className="cart-modal__total-value">
+            {target.priceFrom ? `від ${formatUah(total)}` : formatUah(total)}
+          </span>
         </div>
 
         {error && <p className="cart-modal__error">{error}</p>}

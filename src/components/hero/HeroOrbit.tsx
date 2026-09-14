@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import RaccoonLogo from "../RaccoonLogo";
 import CareSymbolIcon from "./CareSymbolIcon";
 import {
@@ -12,6 +13,7 @@ import {
 const ROTATE_MS = 4_000;
 const POP_MS = 340;
 const GROW_MS = 480;
+const MOBILE_MQ = "(max-width: 1023px)";
 
 function planetPosition(angleDeg: number, radiusPct: number): CSSProperties {
   const rad = ((angleDeg - 90) * Math.PI) / 180;
@@ -22,15 +24,36 @@ function planetPosition(angleDeg: number, radiusPct: number): CSSProperties {
   };
 }
 
+function useIsMobileOrbit() {
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.matchMedia(MOBILE_MQ).matches : true,
+  );
+
+  useEffect(() => {
+    const mq = window.matchMedia(MOBILE_MQ);
+    const onChange = () => setIsMobile(mq.matches);
+    onChange();
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  return isMobile;
+}
+
 type Props = {
   compact?: boolean;
 };
 
 export default function HeroOrbit({ compact = false }: Props) {
+  const isMobile = useIsMobileOrbit();
   const [slots, setSlots] = useState<OrbitPlanetSlot[]>(() => createInitialOrbitSlots());
   const [activeId, setActiveId] = useState<string | null>(null);
   const rings = useMemo(() => groupSlotsByRing(slots), [slots]);
   const tipOpen = Boolean(activeId);
+  const activeSymbol = useMemo(
+    () => slots.find((s) => s.symbol.id === activeId)?.symbol ?? null,
+    [slots, activeId],
+  );
 
   const rotateOne = useCallback(() => {
     setSlots((prev) => {
@@ -68,6 +91,67 @@ export default function HeroOrbit({ compact = false }: Props) {
     if (!stillVisible) setActiveId(null);
   }, [slots, activeId]);
 
+  useEffect(() => {
+    if (!tipOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setActiveId(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [tipOpen]);
+
+  const renderTipCard = (dense = false) =>
+    activeSymbol ? (
+      <div
+        className={`glass-strong rounded-2xl border border-white/70 text-left ${
+          dense ? "px-3 py-2.5" : "px-3.5 py-3"
+        }`}
+      >
+        <div className="flex items-start gap-2">
+          <div className="min-w-0">
+            <div
+              className={`font-bold text-[#1A1A2E] leading-tight ${dense ? "text-[12px]" : "text-[13px]"}`}
+            >
+              {activeSymbol.title}
+            </div>
+            <p
+              className={`text-[#1A1A2E]/65 leading-relaxed ${
+                dense ? "text-[11px] mt-1" : "text-[12px] mt-1.5"
+              }`}
+            >
+              {activeSymbol.tip}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActiveId(null)}
+            className="shrink-0 cc-icon-btn text-[#1A1A2E]/45 !w-7 !h-7"
+            aria-label="Закрити підказку"
+          >
+            ×
+          </button>
+        </div>
+      </div>
+    ) : null;
+
+  const tipPortal =
+    isMobile && activeSymbol && typeof document !== "undefined"
+      ? createPortal(
+          <div className="hero-orbit-tip-layer" role="presentation">
+            <button
+              type="button"
+              className="hero-orbit-tip-layer__backdrop"
+              aria-label="Закрити підказку"
+              onClick={() => setActiveId(null)}
+            />
+            <div className="hero-orbit-tip-layer__card anim-fade-up" role="status">
+              {renderTipCard(false)}
+            </div>
+          </div>,
+          document.body,
+        )
+      : null;
+
   return (
     <div className={`hero-orbit ${compact ? "hero-orbit--compact" : "hero-orbit--hero"}`}>
       <div className={`hero-orbit__stage ${tipOpen ? "is-tip-open" : ""}`}>
@@ -75,7 +159,6 @@ export default function HeroOrbit({ compact = false }: Props) {
         <div className="hero-orbit__ring hero-orbit__ring--mid" aria-hidden />
         <div className="hero-orbit__ring hero-orbit__ring--inner" aria-hidden />
 
-        {/* Sun under orbit layers so tips/icons can paint above it */}
         <div className="hero-orbit__sun">
           <div className="hero-orbit__sun-glow" aria-hidden />
           <RaccoonLogo size={compact ? 68 : 110} className="relative z-10" />
@@ -125,28 +208,9 @@ export default function HeroOrbit({ compact = false }: Props) {
                           />
                         </button>
 
-                        {isActive && (
+                        {!isMobile && isActive && (
                           <div className="hero-orbit__planet-tip anim-fade-up" role="status">
-                            <div className="glass-strong rounded-2xl px-3 py-2.5 border border-white/70 text-left">
-                              <div className="flex items-start gap-2">
-                                <div className="min-w-0">
-                                  <div className="font-bold text-[12px] text-[#1A1A2E] leading-tight">
-                                    {slot.symbol.title}
-                                  </div>
-                                  <p className="text-[11px] text-[#1A1A2E]/65 leading-relaxed mt-1">
-                                    {slot.symbol.tip}
-                                  </p>
-                                </div>
-                                <button
-                                  type="button"
-                                  onClick={() => setActiveId(null)}
-                                  className="shrink-0 cc-icon-btn text-[#1A1A2E]/45 !w-7 !h-7"
-                                  aria-label="Закрити підказку"
-                                >
-                                  ×
-                                </button>
-                              </div>
-                            </div>
+                            {renderTipCard(true)}
                           </div>
                         )}
                       </div>
@@ -158,6 +222,8 @@ export default function HeroOrbit({ compact = false }: Props) {
           );
         })}
       </div>
+
+      {tipPortal}
     </div>
   );
 }

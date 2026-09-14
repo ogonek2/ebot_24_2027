@@ -747,7 +747,6 @@ h6 {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.72);
-  box-shadow: 0 20px 60px rgba(249, 113, 113, 0.22);
 }
 
 .hero-orbit__sun-glow {
@@ -765,6 +764,7 @@ h6 {
   z-index: 1;
 }
 
+/* Desktop: tip follows the selected planet */
 .hero-orbit__planet-tip {
   position: absolute;
   top: calc(100% + 10px);
@@ -779,6 +779,42 @@ h6 {
   position: relative;
   z-index: 1;
   box-shadow: 0 16px 40px rgba(26, 26, 46, 0.22);
+}
+
+/* Mobile: fixed centered tip outside orbit transforms */
+.hero-orbit-tip-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  pointer-events: none;
+}
+
+.hero-orbit-tip-layer__backdrop {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: rgba(26, 26, 46, 0.18);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.hero-orbit-tip-layer__card {
+  position: relative;
+  z-index: 1;
+  width: min(320px, calc(100vw - 32px));
+  pointer-events: auto;
+}
+
+.hero-orbit-tip-layer__card .glass-strong {
+  box-shadow: 0 18px 48px rgba(26, 26, 46, 0.28);
 }
 
 .orbital-fab {
@@ -3679,14 +3715,6 @@ h6 {
   padding: 12px 14px;
   border-radius: 14px;
   background: rgba(26, 26, 46, 0.03);
-}
-
-.promo-detail-terms {
-  margin-bottom: 24px;
-  padding: 20px 18px 8px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.45);
-  border: 1px solid rgba(26, 26, 46, 0.06);
 }
 
 .promo-detail-terms h2 {
@@ -7901,12 +7929,31 @@ h6 {
 .repair-price--panel {
   border-bottom: 1px solid rgba(26, 26, 46, 0.06);
 }
+.repair-price--page {
+  padding: 0;
+  background: transparent;
+}
 .repair-price__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 20px;
+}
+.repair-price--page .repair-price__head {
+  margin-bottom: 18px;
+  padding: 22px 22px 20px;
+  border-radius: 20px;
+  background:
+    linear-gradient(145deg, rgba(255, 255, 255, 0.72), rgba(255, 248, 244, 0.55)),
+    rgba(255, 255, 255, 0.35);
+  border: 1px solid rgba(26, 26, 46, 0.06);
+}
+.repair-price__head-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
 }
 .repair-price__eyebrow {
   margin: 0 0 4px;
@@ -7923,9 +7970,12 @@ h6 {
   color: #1a1a2e;
   letter-spacing: -0.02em;
 }
+.repair-price--page .repair-price__title {
+  font-size: 26px;
+}
 .repair-price__lead {
   margin: 6px 0 0;
-  max-width: 42ch;
+  max-width: 48ch;
   font-size: 13px;
   line-height: 1.45;
   color: rgba(26, 26, 46, 0.55);
@@ -7948,13 +7998,56 @@ h6 {
   background: #2a2a42;
   color: #fff;
 }
+.repair-price__cta--ghost {
+  background: transparent;
+  color: #1a1a2e;
+  border: 1px solid rgba(26, 26, 46, 0.14);
+}
+.repair-price__cta--ghost:hover {
+  background: rgba(26, 26, 46, 0.04);
+  color: #1a1a2e;
+}
+.repair-price__toc {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 22px;
+}
+.repair-price__toc-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(26, 26, 46, 0.72);
+  font-size: 12px;
+  font-weight: 650;
+  text-decoration: none;
+  scroll-margin-top: 96px;
+}
+.repair-price__toc-link:hover {
+  border-color: rgba(249, 113, 113, 0.45);
+  color: #1a1a2e;
+}
 .repair-price__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px 28px;
 }
+.repair-price--page .repair-price__grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
 .repair-price__grid--compact {
   gap: 16px 20px;
+}
+.repair-price--page .repair-price__section {
+  padding: 16px 18px 14px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(26, 26, 46, 0.06);
+  scroll-margin-top: 100px;
 }
 .repair-price__section-title {
   margin: 0 0 10px;
@@ -7964,6 +8057,13 @@ h6 {
   text-transform: uppercase;
   color: rgba(26, 26, 46, 0.45);
 }
+.repair-price--page .repair-price__section-title {
+  margin-bottom: 12px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: #1a1a2e;
+}
 .repair-price__list {
   list-style: none;
   margin: 0;
@@ -7972,6 +8072,9 @@ h6 {
   flex-direction: column;
   gap: 8px;
 }
+.repair-price--page .repair-price__list {
+  gap: 0;
+}
 .repair-price__row {
   display: flex;
   align-items: baseline;
@@ -7979,6 +8082,15 @@ h6 {
   gap: 12px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(26, 26, 46, 0.06);
+}
+.repair-price--page .repair-price__row {
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(26, 26, 46, 0.05);
+}
+.repair-price--page .repair-price__row:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
 }
 .repair-price__name {
   display: flex;
@@ -7994,6 +8106,12 @@ h6 {
   font-weight: 500;
   color: rgba(26, 26, 46, 0.42);
 }
+.repair-price__aside {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
 .repair-price__cost {
   flex-shrink: 0;
   font-size: 13px;
@@ -8001,6 +8119,30 @@ h6 {
   font-variant-numeric: tabular-nums;
   color: #1a1a2e;
   white-space: nowrap;
+}
+.repair-price--page .repair-price__cost {
+  min-width: 5.5rem;
+  text-align: right;
+  font-size: 14px;
+}
+.repair-price__add {
+  flex-shrink: 0;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 0;
+  background: #f97171;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.repair-price__add:hover:not(:disabled) {
+  background: #ef5f5f;
+}
+.repair-price__add:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .repair-price__more {
   margin-top: 16px;
@@ -8010,12 +8152,47 @@ h6 {
 .repair-price__more a {
   color: var(--cc-accent, #f97171);
 }
+.cart-modal__hint {
+  margin: 10px 0 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: rgba(26, 26, 46, 0.5);
+}
 @media (max-width: 767px) {
   .repair-price__grid {
     grid-template-columns: 1fr;
   }
   .repair-price__head {
     flex-direction: column;
+  }
+  .repair-price--page .repair-price__head {
+    padding: 18px 16px;
+  }
+  .repair-price__toc {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .repair-price__toc::-webkit-scrollbar {
+    display: none;
+  }
+  .repair-price__toc-link {
+    flex-shrink: 0;
+  }
+  .repair-price--page .repair-price__row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .repair-price__aside {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .repair-price--page .repair-price__cost {
+    min-width: 0;
+    text-align: left;
   }
 }
 

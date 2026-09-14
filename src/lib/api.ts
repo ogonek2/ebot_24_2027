@@ -281,6 +281,22 @@ export async function addToCart(
   return data;
 }
 
+export async function addRepairToCart(repairItemId: number, quantity = 1) {
+  const res = await apiFetch("/api/cart/add", {
+    method: "POST",
+    body: JSON.stringify({
+      repair_item_id: repairItemId,
+      quantity,
+      cleaning_type: "repair",
+    }),
+  });
+  const data = (await res.json()) as { success: boolean; message?: string; cart_count?: number };
+  if (!data.success) {
+    throw new Error(data.message ?? "Не вдалося додати до кошика");
+  }
+  return data;
+}
+
 export async function submitConsultation(name: string, phone: string, message?: string) {
   return apiJson("/api/order/consultation", {
     method: "POST",
@@ -378,12 +394,14 @@ export async function fetchScheduledPopups() {
 
 export type CartItem = {
   key: string;
-  service_id: number;
+  service_id: number | null;
+  repair_item_id?: number | null;
   service_name: string;
   category_name: string;
   quantity: number;
   cleaning_type: string;
   price: number;
+  price_from?: boolean;
   total: number;
 };
 
@@ -430,12 +448,14 @@ export async function submitOrder(data: Record<string, unknown>) {
 }
 
 export type LastOrderItem = {
-  service_id: number;
+  service_id?: number | null;
+  repair_item_id?: number | null;
   service_name: string;
   category_name: string;
   quantity: number;
   cleaning_type: string;
   price: number;
+  price_from?: boolean;
   total: number;
 };
 

@@ -7,16 +7,24 @@ import {
   phoneDisplayPlaceholder,
 } from "@/lib/phoneMask";
 import type { IconName } from "@/storage/icons";
+import iconHotel from "@/storage/icons/Frame 1714.svg";
+import iconRestaurant from "@/storage/icons/Frame 1584.svg";
+import iconOffice from "@/storage/icons/Frame 1706.svg";
+import iconSpa from "@/storage/icons/Frame 1699.svg";
+import iconMedical from "@/storage/icons/Frame 1713.svg";
+import iconBoutique from "@/storage/icons/Frame 1694.svg";
+import iconTheater from "@/storage/icons/Frame 1709.svg";
+import iconFitness from "@/storage/icons/Frame 1696.svg";
 
-const clients: Array<{ icon: IconName; name: string }> = [
-  { icon: "pillow", name: "Готелі та хостели" },
-  { icon: "washer", name: "Ресторани та кафе" },
-  { icon: "iron", name: "Офіси та коворкінги" },
-  { icon: "eco", name: "СПА та салони краси" },
-  { icon: "hands", name: "Медичні заклади" },
-  { icon: "dress", name: "Шоуруми та бутики" },
-  { icon: "jacket", name: "Театри та студії" },
-  { icon: "bag", name: "Фітнес-клуби" },
+const clients: Array<{ icon: string; name: string }> = [
+  { icon: iconHotel, name: "Готелі та хостели" },
+  { icon: iconRestaurant, name: "Ресторани та кафе" },
+  { icon: iconOffice, name: "Офіси та коворкінги" },
+  { icon: iconSpa, name: "СПА та салони краси" },
+  { icon: iconMedical, name: "Медичні заклади" },
+  { icon: iconBoutique, name: "Шоуруми та бутики" },
+  { icon: iconTheater, name: "Театри та студії" },
+  { icon: iconFitness, name: "Фітнес-клуби" },
 ];
 
 const benefits: Array<{ icon: IconName; title: string; desc: string }> = [
@@ -298,7 +306,7 @@ export default function B2BPage() {
             {clients.map((c) => (
               <div key={c.name} className="glass-card text-center p-6">
                 <div className="flex justify-center mb-3">
-                  <CategoryIcon name={c.icon} size={48} alt={c.name} fallback />
+                  <CategoryIcon src={c.icon} size={48} alt={c.name} />
                 </div>
                 <div className="font-semibold text-[14px] text-[#1A1A2E]" >
                   {c.name}

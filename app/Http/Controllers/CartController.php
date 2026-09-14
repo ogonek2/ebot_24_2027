@@ -7,6 +7,7 @@ use App\Models\Service;
 use App\Models\Category;
 use App\Models\locations;
 use App\Models\Order;
+use App\Models\RepairItem;
 
 class CartController extends Controller
 {
@@ -15,36 +16,12 @@ class CartController extends Controller
      */
     public function getCart()
     {
-        $cart = session('cart', []);
-        $cartItems = [];
-        $total = 0;
-
-        foreach ($cart as $key => $item) {
-            $service = Service::with('categories')->find($item['service_id']);
-            if ($service) {
-                $category = $service->categories->first();
-                $price = $this->resolveCartUnitPrice($service, $item['cleaning_type']);
-
-                $cartItems[] = [
-                    'key' => $key,
-                    'service_id' => $service->id,
-                    'service_name' => $service->name,
-                    'category_name' => $category->name ?? 'Послуга',
-                    'category_icon' => $category->category_img ?? null,
-                    'quantity' => $item['quantity'],
-                    'cleaning_type' => $item['cleaning_type'],
-                    'price' => $price,
-                    'total' => $price * $item['quantity'],
-                ];
-
-                $total += $price * $item['quantity'];
-            }
-        }
+        $built = $this->buildCartPayload(session('cart', []));
 
         return response()->json([
-            'items' => $cartItems,
-            'total' => $total,
-            'count' => count($cartItems),
+            'items' => $built['items'],
+            'total' => $built['total'],
+            'count' => count($built['items']),
         ]);
     }
 
@@ -54,32 +31,54 @@ class CartController extends Controller
     public function addToCart(Request $request)
     {
         $request->validate([
-            'service_id' => 'required|exists:services,id',
+            'service_id' => 'nullable|exists:services,id',
+            'repair_item_id' => 'nullable|exists:repair_items,id',
             'quantity' => 'required|integer|min:1',
-            'cleaning_type' => 'required|in:individual,stream',
+            'cleaning_type' => 'nullable|in:individual,stream,repair',
         ]);
 
-        $service = Service::with('categories')->findOrFail($request->service_id);
-
-        // Проверяем, доступна ли индивидуальная чистка
-        if ($request->cleaning_type === 'individual' && (!$service->individual_price || $service->individual_price <= 0)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Індивідуальна чистка недоступна для цієї послуги'
-            ], 400);
-        }
-
         $cart = session('cart', []);
-        $key = $this->generateCartKey($request->service_id, $request->cleaning_type);
 
-        if (isset($cart[$key])) {
-            $cart[$key]['quantity'] += $request->quantity;
+        if ($request->filled('repair_item_id')) {
+            RepairItem::findOrFail($request->repair_item_id);
+            $key = 'repair_' . $request->repair_item_id;
+            if (isset($cart[$key])) {
+                $cart[$key]['quantity'] += $request->quantity;
+            } else {
+                $cart[$key] = [
+                    'type' => 'repair',
+                    'repair_item_id' => (int) $request->repair_item_id,
+                    'quantity' => (int) $request->quantity,
+                    'cleaning_type' => 'repair',
+                ];
+            }
         } else {
-            $cart[$key] = [
-                'service_id' => $request->service_id,
-                'quantity' => $request->quantity,
-                'cleaning_type' => $request->cleaning_type,
-            ];
+            $request->validate([
+                'service_id' => 'required|exists:services,id',
+                'cleaning_type' => 'required|in:individual,stream',
+            ]);
+
+            $service = Service::with('categories')->findOrFail($request->service_id);
+
+            if ($request->cleaning_type === 'individual' && (!$service->individual_price || $service->individual_price <= 0)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Індивідуальна чистка недоступна для цієї послуги'
+                ], 400);
+            }
+
+            $key = $this->generateCartKey($request->service_id, $request->cleaning_type);
+
+            if (isset($cart[$key])) {
+                $cart[$key]['quantity'] += $request->quantity;
+            } else {
+                $cart[$key] = [
+                    'type' => 'service',
+                    'service_id' => $request->service_id,
+                    'quantity' => $request->quantity,
+                    'cleaning_type' => $request->cleaning_type,
+                ];
+            }
         }
 
         session(['cart' => $cart]);
@@ -170,6 +169,72 @@ class CartController extends Controller
     }
 
     /**
+     * @param  array<string, array<string, mixed>>  $cart
+     * @return array{items: list<array<string, mixed>>, total: float}
+     */
+    private function buildCartPayload(array $cart): array
+    {
+        $cartItems = [];
+        $total = 0.0;
+
+        foreach ($cart as $key => $item) {
+            $isRepair = ($item['type'] ?? null) === 'repair' || !empty($item['repair_item_id']) || str_starts_with((string) $key, 'repair_');
+
+            if ($isRepair) {
+                $repairId = (int) ($item['repair_item_id'] ?? (int) str_replace('repair_', '', (string) $key));
+                $repair = RepairItem::with('section.priceList.category')->find($repairId);
+                if (!$repair) {
+                    continue;
+                }
+                $price = (float) $repair->price;
+                $categoryName = $repair->section?->priceList?->category?->name
+                    ?? $repair->section?->title
+                    ?? 'Ремонт взуття';
+
+                $cartItems[] = [
+                    'key' => $key,
+                    'service_id' => null,
+                    'repair_item_id' => $repair->id,
+                    'service_name' => $repair->name,
+                    'category_name' => $categoryName,
+                    'category_icon' => null,
+                    'quantity' => $item['quantity'],
+                    'cleaning_type' => 'repair',
+                    'price' => $price,
+                    'price_from' => filled($repair->price_prefix),
+                    'total' => $price * $item['quantity'],
+                ];
+                $total += $price * $item['quantity'];
+                continue;
+            }
+
+            $service = Service::with('categories')->find($item['service_id'] ?? null);
+            if (!$service) {
+                continue;
+            }
+            $category = $service->categories->first();
+            $price = $this->resolveCartUnitPrice($service, $item['cleaning_type'] ?? 'stream');
+
+            $cartItems[] = [
+                'key' => $key,
+                'service_id' => $service->id,
+                'repair_item_id' => null,
+                'service_name' => $service->name,
+                'category_name' => $category->name ?? 'Послуга',
+                'category_icon' => $category->category_img ?? null,
+                'quantity' => $item['quantity'],
+                'cleaning_type' => $item['cleaning_type'],
+                'price' => $price,
+                'price_from' => false,
+                'total' => $price * $item['quantity'],
+            ];
+            $total += $price * $item['quantity'];
+        }
+
+        return ['items' => $cartItems, 'total' => $total];
+    }
+
+    /**
      * Сгенерировать ключ корзины
      */
     private function generateCartKey($serviceId, $cleaningType)
@@ -208,27 +273,27 @@ class CartController extends Controller
         }
 
         // Получаем детали корзины
-        $cartItems = [];
-        $total = 0;
+        $built = $this->buildCartPayload($cart);
+        $cartItems = array_map(static function (array $row) {
+            return [
+                'service_id' => $row['service_id'] ?? null,
+                'repair_item_id' => $row['repair_item_id'] ?? null,
+                'service_name' => $row['service_name'],
+                'category_name' => $row['category_name'],
+                'quantity' => $row['quantity'],
+                'cleaning_type' => $row['cleaning_type'],
+                'price' => $row['price'],
+                'price_from' => !empty($row['price_from']),
+                'total' => $row['total'],
+            ];
+        }, $built['items']);
+        $total = $built['total'];
 
-        foreach ($cart as $key => $item) {
-            $service = Service::with('categories')->find($item['service_id']);
-            if ($service) {
-                $category = $service->categories->first();
-                $price = $this->resolveCartUnitPrice($service, $item['cleaning_type']);
-
-                $cartItems[] = [
-                    'service_id' => $service->id,
-                    'service_name' => $service->name,
-                    'category_name' => $category->name ?? 'Послуга',
-                    'quantity' => $item['quantity'],
-                    'cleaning_type' => $item['cleaning_type'],
-                    'price' => $price,
-                    'total' => $price * $item['quantity'],
-                ];
-
-                $total += $price * $item['quantity'];
-            }
+        if ($total <= 0 && empty($cartItems)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Корзина порожня'
+            ], 400);
         }
 
         // Получаем информацию о приемном пункте если есть
@@ -420,8 +485,14 @@ class CartController extends Controller
                 $text .= " (" . $item['category_name'] . ")";
             }
             $text .= "\n";
-            $text .= "  Тип: " . ($item['cleaning_type'] === 'individual' ? 'Індивідуальна' : 'Потокова') . "\n";
-            $text .= "  Кількість: " . $item['quantity'] . " × " . number_format($item['price'], 0, ',', ' ') . "₴ = " . number_format($item['total'], 0, ',', ' ') . "₴\n\n";
+            $typeLabel = match ($item['cleaning_type'] ?? '') {
+                'individual' => 'Індивідуальна',
+                'repair' => 'Ремонт',
+                default => 'Потокова',
+            };
+            $pricePrefix = !empty($item['price_from']) ? 'від ' : '';
+            $text .= "  Тип: " . $typeLabel . "\n";
+            $text .= "  Кількість: " . $item['quantity'] . " × " . $pricePrefix . number_format($item['price'], 0, ',', ' ') . "₴ = " . $pricePrefix . number_format($item['total'], 0, ',', ' ') . "₴\n\n";
         }
 
         $text .= "💰 *Загальна сума:* " . number_format($order->total, 0, ',', ' ') . "₴\n\n";

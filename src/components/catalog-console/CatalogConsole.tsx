@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { catalog as fallbackCatalog } from "@/data/catalog";
 import { useBootstrap } from "@/context/BootstrapContext";
 import { useCart } from "@/context/CartContext";
-import { findCategory, topLevelCategories } from "@/lib/categories";
+import { findCategory } from "@/lib/categories";
 import { parseUah, buildAddToCartTarget, resolveCatalogCleaningDisplay } from "@/lib/cartPrices";
-import { ROUTES } from "@/lib/routes";
+import { categoryUrl, ROUTES } from "@/lib/routes";
 import CategoryRail from "./CategoryRail";
 import ConsoleHeader from "./ConsoleHeader";
 import DenseList, { cartKey } from "./DenseList";
 import InspectorPanel, { MobileInspectorSheet } from "./InspectorPanel";
 import MobileCatalogBar from "./MobileCatalogBar";
-import RepairPriceListView from "./RepairPriceListView";
+import ShoeCatalogSwitch, { isShoeLikeCategory, resolveShoeCatalogModes } from "./ShoeCatalogSwitch";
 import type {
   CartLine,
   CatalogCategoryExt,
@@ -44,27 +44,21 @@ export default function CatalogConsole({
   focusCategoryId,
 }: CatalogConsoleProps) {
   const bootstrap = useBootstrap();
+  const navigate = useNavigate();
   const { openAddModal } = useCart();
   const listRef = useRef<HTMLDivElement>(null);
+  const shoeModes = useMemo(
+    () => resolveShoeCatalogModes(bootstrap.categories),
+    [bootstrap.categories],
+  );
+
   const catalog = useMemo((): CatalogCategoryExt[] => {
     const all = bootstrap.categories ?? [];
-    const focusId = focusCategoryId || bootstrap.activeCategory || undefined;
-    const focusCat = focusId ? findCategory(all, focusId) : undefined;
 
-    let source: typeof all;
-    if (focusCat) {
-      if (focusCat.parentId != null) {
-        source = [focusCat];
-      } else {
-        const children = all.filter((c) => c.parentId === focusCat.id);
-        source = children.length ? [focusCat, ...children] : [focusCat];
-      }
-    } else {
-      source = [
-        ...topLevelCategories(all),
-        ...all.filter((c) => Boolean(c.parentId && c.repairPriceList)),
-      ];
-    }
+    /** Repair has its own page — keep it out of the shared table, but keep the full rail. */
+    const source = (bootstrap.categories ?? [])
+      .filter((c) => !c.parentId)
+      .filter((c) => !c.repairPriceList && c.id !== shoeModes.repair?.id);
 
     if (source.length) {
       return source.map((c) => ({
@@ -87,11 +81,11 @@ export default function CatalogConsole({
           categoryHref: item.categoryHref,
           serviceHref: item.href,
         })),
-        repairPriceList: c.repairPriceList ?? null,
+        repairPriceList: null,
       }));
     }
     return fallbackCatalog as CatalogCategoryExt[];
-  }, [bootstrap.categories, bootstrap.activeCategory, focusCategoryId]);
+  }, [bootstrap.categories, shoeModes.repair]);
 
   const nodes = useMemo(() => buildCatalogNodes(catalog), [catalog]);
   const [selectionId, setSelectionId] = useState(nodes[0]?.id ?? "");
@@ -105,18 +99,6 @@ export default function CatalogConsole({
   const [cart, setCart] = useState<CartLine[]>([]);
   const [toast, setToast] = useState<string | null>(null);
 
-  const repairSelection = useMemo(() => {
-    const direct = nodes.find((n) => n.id === selectionId && n.repairPriceList);
-    if (direct?.repairPriceList) return direct;
-    for (const n of nodes) {
-      const sg = n.subgroups.find((s) => s.id === selectionId);
-      if (sg && /ремонт/i.test(sg.title)) {
-        return nodes.find((x) => x.repairPriceList) ?? null;
-      }
-    }
-    return null;
-  }, [nodes, selectionId]);
-
   useEffect(() => {
     if (nodes.length && !nodes.some((n) => n.id === selectionId || n.subgroups.some((sg) => sg.id === selectionId))) {
       setSelectionId(nodes[0].id);
@@ -127,13 +109,22 @@ export default function CatalogConsole({
     const active = focusCategoryId || bootstrap.activeCategory;
     if (!active || !nodes.length) return;
 
+    // Repair URLs are handled by CategoryPage — prefer cleaning / parent in the console.
+    if (active === shoeModes.repair?.id) {
+      const fallback =
+        (shoeModes.clean && nodes.find((n) => n.id === shoeModes.clean!.id)) ||
+        nodes.find((n) => isShoeLikeCategory(n.id, n.title)) ||
+        nodes[0];
+      if (fallback) setSelectionId(fallback.id);
+      return;
+    }
+
     const direct = nodes.find((n) => n.id === active);
     if (direct) {
       setSelectionId(direct.id);
       return;
     }
 
-    // URL points at a parent that was expanded into children-only list, or a subgroup id
     for (const n of nodes) {
       if (n.subgroups.some((sg) => sg.id === active)) {
         setSelectionId(active);
@@ -141,10 +132,18 @@ export default function CatalogConsole({
       }
     }
 
-    // Prefer first child when focusing a parent that isn't itself a node
-    const childOfFocus = nodes.find((n) => n.id !== active && findCategory(bootstrap.categories ?? [], n.id)?.parentId === active);
+    // Child category URL: highlight its parent in the full top-level rail
+    const focused = findCategory(bootstrap.categories ?? [], active);
+    if (focused?.parentId && nodes.some((n) => n.id === focused.parentId)) {
+      setSelectionId(focused.parentId);
+      return;
+    }
+
+    const childOfFocus = nodes.find(
+      (n) => n.id !== active && findCategory(bootstrap.categories ?? [], n.id)?.parentId === active,
+    );
     if (childOfFocus) setSelectionId(childOfFocus.id);
-  }, [focusCategoryId, bootstrap.activeCategory, bootstrap.categories, nodes]);
+  }, [focusCategoryId, bootstrap.activeCategory, bootstrap.categories, nodes, shoeModes.clean, shoeModes.repair]);
 
   useEffect(() => {
     if (!toast) return;
@@ -157,6 +156,8 @@ export default function CatalogConsole({
     () => buildFlatRows(nodes, selectionId, query, filters, globalSearch),
     [nodes, selectionId, query, filters, globalSearch],
   );
+
+  const resultCount = rows.length;
 
   const inCartKeys = useMemo(() => new Set(cart.map((l) => l.id)), [cart]);
 
@@ -186,11 +187,24 @@ export default function CatalogConsole({
 
   const selectCategory = useCallback(
     (id: string) => {
+      const repairId = shoeModes.repair?.id;
+      if (repairId && (id === repairId || id.startsWith(`${repairId}--`))) {
+        navigate(categoryUrl(repairId));
+        return;
+      }
+
+      // On a dedicated category page, switching the rail should change the URL
+      // so the head section stays in sync with the table.
+      if (focusCategoryId && variant === "page" && !id.includes("--") && id !== focusCategoryId) {
+        navigate(categoryUrl(id));
+        return;
+      }
+
       setSelectionId(id);
       setQuery("");
       requestAnimationFrame(() => scrollToListTop());
     },
-    [scrollToListTop],
+    [focusCategoryId, navigate, scrollToListTop, shoeModes.repair?.id, variant],
   );
 
   const addRow = (row: FlatRow, qty = 1) => {
@@ -260,7 +274,7 @@ export default function CatalogConsole({
               onSelectCategory={selectCategory}
               query={query}
               onQueryChange={setQuery}
-              resultCount={rows.length}
+              resultCount={resultCount}
               cartCount={cart.length}
               onCheckout={() => onCheckout?.(cart)}
             />
@@ -274,12 +288,21 @@ export default function CatalogConsole({
               onQueryChange={setQuery}
               density={density}
               onDensityChange={setDensity}
-              resultCount={rows.length}
+              resultCount={resultCount}
               cartCount={cart.length}
               onCheckout={() => onCheckout?.(cart)}
             />
           </div>
         </div>
+
+        {!suppressHeading && (
+          <ShoeCatalogSwitch
+            categories={bootstrap.categories}
+            activeId={selectionId}
+            onSelectId={selectCategory}
+            className="cc-shoe-switch"
+          />
+        )}
 
         <div
           className={`cc-page-body ${railCollapsed ? "is-rail-collapsed" : ""} ${inspectorCollapsed ? "is-insp-collapsed" : ""}`}
@@ -302,15 +325,6 @@ export default function CatalogConsole({
             onHover={setSelectedRow}
             onSelect={handleSelectRow}
             onAdd={addRow}
-            topSlot={
-              repairSelection?.repairPriceList ? (
-                <RepairPriceListView
-                  list={repairSelection.repairPriceList}
-                  variant="panel"
-                  categoryHref={repairSelection.id}
-                />
-              ) : null
-            }
           />
 
           <InspectorPanel

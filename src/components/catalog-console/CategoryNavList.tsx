@@ -43,7 +43,11 @@ export default function CategoryNavList({ nodes, selectionId, onSelect, compact 
                 <span className="cc-rail-item__text">
                   <span className="cc-rail-item__title">{node.title}</span>
                 </span>
-                <span className="cc-mono-count cc-rail-item__count">{node.items.length}</span>
+                <span className="cc-mono-count cc-rail-item__count">
+                  {node.repairPriceList
+                    ? node.repairPriceList.sections.reduce((n, s) => n + s.items.length, 0)
+                    : node.items.length}
+                </span>
               </button>
 
               {hasSubgroups && (

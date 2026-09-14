@@ -9,13 +9,6 @@ import type {
   FlatRow,
 } from "./types";
 
-const SHOE_LABELS = ["Хімчистка взуття", "Ремонт взуття"];
-
-function isShoeCategory(categoryId: string, categoryTitle: string): boolean {
-  const hay = `${categoryId} ${categoryTitle}`.toLowerCase();
-  return hay.includes("взут") || hay.includes("vzut") || hay.includes("shoe");
-}
-
 function itemPriceForGrouping(item: CatalogItemExt): string {
   return item.price ?? "";
 }
@@ -53,13 +46,7 @@ export function inferSubgroups(categoryId: string, categoryTitle: string, items:
   const priced = items.filter((i) => !isOnRequest(itemPriceForGrouping(i)));
   const onRequest = items.filter((i) => isOnRequest(itemPriceForGrouping(i)));
 
-  if (isShoeCategory(categoryId, categoryTitle) && priced.length > 0 && onRequest.length > 0) {
-    return [
-      { id: `${categoryId}--clean`, title: SHOE_LABELS[0], items: priced },
-      { id: `${categoryId}--repair`, title: SHOE_LABELS[1], items: onRequest },
-    ];
-  }
-
+  // Shoe repair has its own dedicated page — do not invent a "Ремонт взуття" subgroup here.
   if (priced.length >= 2 && onRequest.length >= 2) {
     return [
       { id: `${categoryId}--priced`, title: "З фіксованою ціною", items: priced },

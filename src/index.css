@@ -8057,6 +8057,47 @@ h6 {
 }
 .repair-price--panel {
   border-bottom: 1px solid rgba(26, 26, 46, 0.06);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+.repair-price--panel .repair-price__head {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.repair-price--panel .repair-price__grid {
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+/* Panel lives in the catalog list column — never let price crush the name. */
+.repair-price--panel .repair-price__row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.repair-price--panel .repair-price__name {
+  flex: none;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
+}
+.repair-price--panel .repair-price__aside {
+  flex: none;
+  width: auto;
+  max-width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+}
+.repair-price--panel .repair-price__cost {
+  white-space: nowrap;
 }
 .repair-price--page {
   padding: 0;
@@ -8171,6 +8212,14 @@ h6 {
 .repair-price__grid--compact {
   gap: 16px 20px;
 }
+.repair-price--panel .repair-price__grid {
+  grid-template-columns: 1fr;
+}
+@media (max-width: 900px) {
+  .repair-price__grid {
+    grid-template-columns: 1fr;
+  }
+}
 .repair-price--page .repair-price__section {
   padding: 16px 18px 14px;
   border-radius: 16px;
@@ -8206,7 +8255,7 @@ h6 {
 }
 .repair-price__row {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
   padding-bottom: 8px;
@@ -8225,21 +8274,27 @@ h6 {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  flex: 1 1 auto;
   min-width: 0;
   font-size: 14px;
   font-weight: 600;
   color: #1a1a2e;
+  overflow-wrap: break-word;
+  word-break: normal;
+  white-space: normal;
 }
 .repair-price__note {
   font-size: 11px;
   font-weight: 500;
   color: rgba(26, 26, 46, 0.42);
+  white-space: normal;
 }
 .repair-price__aside {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  margin-left: 8px;
 }
 .repair-price__cost {
   flex-shrink: 0;
@@ -8287,6 +8342,49 @@ h6 {
   line-height: 1.4;
   color: rgba(26, 26, 46, 0.5);
 }
+
+/* Shoe clean ↔ repair switch */
+.shoe-switch {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.cc-shoe-switch {
+  margin: 0 0 12px;
+  padding: 0 2px;
+}
+.shoe-switch__tab {
+  display: inline-flex;
+  align-items: center;
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(26, 26, 46, 0.1);
+  background: rgba(255, 255, 255, 0.55);
+  color: rgba(26, 26, 46, 0.7);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.shoe-switch__tab:hover {
+  color: #f97171;
+  border-color: rgba(249, 113, 113, 0.35);
+}
+.shoe-switch__tab--active {
+  background: #f97171;
+  border-color: #f97171;
+  color: #fff;
+  box-shadow: 0 8px 24px rgba(249, 113, 113, 0.25);
+}
+.shoe-switch__tab--active:hover {
+  color: #fff;
+}
+
 @media (max-width: 767px) {
   .repair-price__grid {
     grid-template-columns: 1fr;
@@ -8315,7 +8413,10 @@ h6 {
     flex-direction: column;
     gap: 8px;
   }
-  .repair-price__aside {
+  /* Page-only: stacking rows need full-width aside. Do NOT apply to panel —
+     width:100% on a horizontal flex row collapses the name to ~0 and wraps
+     each character vertically (seen in catalog «Ремонт взуття»). */
+  .repair-price--page .repair-price__aside {
     width: 100%;
     justify-content: space-between;
   }

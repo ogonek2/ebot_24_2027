@@ -108,7 +108,9 @@ function InspectorBody({
       <div className={`${compact ? "" : "p-4 space-y-4"}`}>
       <div>
         <div className="text-[11px] text-[#1A1A2E]/45 mb-1">
-          {category.title} / {subgroup.title}
+          {subgroup.title && subgroup.title !== category.title
+            ? `${category.title} / ${subgroup.title}`
+            : category.title}
         </div>
         <h3 className="font-bold text-[20px] text-[#1A1A2E] leading-tight">{item.name}</h3>
       </div>

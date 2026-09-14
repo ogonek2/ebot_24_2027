@@ -5,6 +5,11 @@ import PageSkeleton from "../components/skeleton/PageSkeleton";
 import SubcategoryNav from "../components/SubcategoryNav";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import RepairPriceListView from "@/components/catalog-console/RepairPriceListView";
+import ShoeCatalogSwitch, {
+  countRepairItems,
+  isShoeLikeCategory,
+  resolveShoeCatalogModes,
+} from "@/components/catalog-console/ShoeCatalogSwitch";
 import { useBootstrap, useBootstrapState } from "@/context/BootstrapContext";
 import { openFeedbackModal } from "@/context/FeedbackContext";
 import { buildCategoryBreadcrumbItems, findCategory } from "@/lib/categories";
@@ -33,8 +38,17 @@ export default function CategoryPage() {
     ].filter(Boolean) as SpaCatalogCategory[];
 
     for (const extra of extras) {
-      if (!base.some((c) => c.id === extra.id)) {
+      const idx = base.findIndex((c) => c.id === extra.id);
+      if (idx === -1) {
         base.push(extra);
+      } else {
+        // Prefer fresher API payload (esp. repairPriceList) over stale bootstrap cache
+        base[idx] = {
+          ...base[idx],
+          ...extra,
+          items: extra.items?.length ? extra.items : base[idx].items,
+          repairPriceList: extra.repairPriceList ?? base[idx].repairPriceList,
+        };
       }
     }
     return base;
@@ -43,6 +57,12 @@ export default function CategoryPage() {
   const categoryData = findCategory(mergedCategories, category) ?? apiCategory?.category ?? null;
   const categoryTitle = categoryData?.title ?? category;
   const repairList = categoryData?.repairPriceList ?? null;
+  const shoeModes = resolveShoeCatalogModes(mergedCategories);
+  const isShoeContext =
+    Boolean(repairList) ||
+    categoryData?.id === shoeModes.repair?.id ||
+    categoryData?.id === shoeModes.clean?.id ||
+    Boolean(categoryData && isShoeLikeCategory(categoryData.id, categoryData.title));
   const pending = (loading || isRefreshing || apiLoading) && !categoryData;
 
   if (pending) {
@@ -61,6 +81,8 @@ export default function CategoryPage() {
     );
   }
 
+  const repairCount = countRepairItems(repairList);
+
   return (
     <div className="min-h-screen pt-24 pb-24">
       <div className="site-container">
@@ -74,9 +96,16 @@ export default function CategoryPage() {
               ? "Орієнтовний прайс на ремонт. Додайте потрібні позиції в кошик — точну вартість підтвердимо після огляду."
               : `Актуальні ціни та послуги категорії «${categoryTitle}». Додайте потрібне в кошик і оформіть замовлення онлайн.`}
           </p>
+          {repairList && repairCount > 0 && (
+            <p className="text-[13px] text-[#1A1A2E]/45 mt-2">{repairCount} позицій у прайсі</p>
+          )}
         </div>
 
-        <SubcategoryNav categories={mergedCategories} currentId={category} />
+        {isShoeContext ? (
+          <ShoeCatalogSwitch categories={mergedCategories} activeId={category} className="mb-6" />
+        ) : (
+          <SubcategoryNav categories={mergedCategories} currentId={category} />
+        )}
 
         {repairList ? (
           <RepairPriceListView list={repairList} variant="page" categoryHref={category} />

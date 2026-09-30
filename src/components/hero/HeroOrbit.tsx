@@ -144,7 +144,7 @@ export default function HeroOrbit({ compact = false }: Props) {
               aria-label="Закрити підказку"
               onClick={() => setActiveId(null)}
             />
-            <div className="hero-orbit-tip-layer__card anim-fade-up" role="status">
+            <div className="hero-orbit-tip-layer__card" role="status">
               {renderTipCard(false)}
             </div>
           </div>,
@@ -209,7 +209,7 @@ export default function HeroOrbit({ compact = false }: Props) {
                         </button>
 
                         {!isMobile && isActive && (
-                          <div className="hero-orbit__planet-tip anim-fade-up" role="status">
+                          <div className="hero-orbit__planet-tip" role="status">
                             {renderTipCard(true)}
                           </div>
                         )}

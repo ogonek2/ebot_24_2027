@@ -944,47 +944,29 @@ h6 {
   }
 }
 
-.fade-in-up {
-  animation: fade-up 0.75s var(--ease-apple) both;
-}
-
-.anim-fade-up {
-  animation: fade-up 0.8s var(--ease-apple) both;
+/* Entrance / stagger reveal disabled — content mounts fully visible */
+.fade-in-up,
+.anim-fade-up,
+.page-enter,
+.animate-in {
+  animation: none !important;
 }
 
 .anim-scale-in {
-  animation: scale-in 0.7s var(--ease-spring) both;
+  animation: none !important;
 }
 
 .anim-slide-down {
   animation: slide-down 0.55s var(--ease-apple) both;
 }
 
-.stagger-1 {
-  animation-delay: 0.05s;
-}
-.stagger-2 {
-  animation-delay: 0.12s;
-}
-.stagger-3 {
-  animation-delay: 0.2s;
-}
-.stagger-4 {
-  animation-delay: 0.28s;
-}
-.stagger-5 {
-  animation-delay: 0.36s;
-}
+.stagger-1,
+.stagger-2,
+.stagger-3,
+.stagger-4,
+.stagger-5,
 .stagger-6 {
-  animation-delay: 0.44s;
-}
-
-.page-enter {
-  animation: fade-in 0.35s var(--ease-apple) both;
-}
-
-.animate-in {
-  animation: fade-in 0.35s var(--ease-apple) both;
+  animation-delay: 0s !important;
 }
 
 .skeleton-glass {

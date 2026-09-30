@@ -18,14 +18,14 @@ export default function HeroSection() {
         <div className="relative lg:flex lg:items-center flex-1 lg:min-h-[min(88svh,860px)]">
           {/* Текст — ліва колонка, обмежена ширина */}
           <div className="relative z-10 w-full max-w-[540px] xl:max-w-[580px] pt-2 lg:pt-10 lg:pb-8">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/45 border border-white/55 backdrop-blur-md px-3 py-1.5 mb-5 sm:mb-8 w-fit anim-fade-up shadow-sm">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/45 border border-white/55 backdrop-blur-md px-3 py-1.5 mb-5 sm:mb-8 w-fit shadow-sm">
               <span className="w-1.5 h-1.5 rounded-full bg-[#f97171] animate-pulse" />
               <span className="text-[11px] sm:text-[12px] font-semibold tracking-[0.14em] uppercase flex items-start gap-1 text-[#1A1A2E]/55">
                 <span>#найякісніша_хімчистка_столиці</span>
               </span>
             </div>
 
-            <h1 className="font-display font-black tracking-[-0.05em] leading-[0.82] text-[#1A1A2E] anim-fade-up stagger-1">
+            <h1 className="font-display font-black tracking-[-0.05em] leading-[0.82] text-[#1A1A2E]">
               <span className="block text-[clamp(2.75rem,10vw,5rem)] lg:text-[clamp(3.25rem,4.8vw,6.5rem)] xl:text-[clamp(3.75rem,5.2vw,7.25rem)]">
                 ХІМЧИСТКА
               </span>
@@ -34,11 +34,11 @@ export default function HeroSection() {
               </span>
             </h1>
 
-            <p className="mt-5 sm:mt-8 max-w-md text-[15px] sm:text-[18px] font-medium text-[#1A1A2E]/60 leading-relaxed anim-fade-up stagger-2">
+            <p className="mt-5 sm:mt-8 max-w-md text-[15px] sm:text-[18px] font-medium text-[#1A1A2E]/60 leading-relaxed">
               Гіпоаллергенно, якісно, та з увагою до деталей по догляду за вашим одягом
             </p>
 
-            <div className="mt-7 sm:mt-10 flex flex-wrap items-center gap-3 anim-fade-up stagger-3">
+            <div className="mt-7 sm:mt-10 flex flex-wrap items-center gap-3">
               <button type="button" onClick={openFeedbackModal} className="btn-primary px-7 py-3.5 text-[14px] sm:text-[15px]">
                 Замовити
               </button>

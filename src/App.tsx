@@ -8,6 +8,7 @@ import Footer from "./components/Footer";
 import BottomNav from "./components/BottomNav";
 import FloatingDock from "./components/FloatingDock";
 import ScheduledPopupManager from "./components/ScheduledPopupManager";
+import AppPreloader from "./components/AppPreloader";
 import HomePage from "./pages/HomePage";
 import ServicesPage from "./pages/ServicesPage";
 import CategoryPage from "./pages/CategoryPage";
@@ -34,7 +35,11 @@ import { ROUTES } from "./lib/routes";
 function AppShell() {
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const location = useLocation();
-  const { error } = useBootstrapState();
+  const { error, bootstrapping } = useBootstrapState();
+
+  if (bootstrapping) {
+    return <AppPreloader />;
+  }
 
   return (
     <div className="app-shell font-body">

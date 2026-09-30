@@ -10,6 +10,7 @@ import { useLocation } from "react-router-dom";
 import {
   hasBootstrapData,
   hydrateBootstrapCache,
+  isBootstrapReady,
   loadBootstrap,
   mergeBootstrap,
   peekBootstrap,
@@ -21,6 +22,8 @@ type BootstrapContextValue = {
   data: SpaBootstrap;
   loading: boolean;
   isRefreshing: boolean;
+  /** True until first paint-ready bootstrap for the current route. */
+  bootstrapping: boolean;
   error: string | null;
 };
 
@@ -28,6 +31,7 @@ const BootstrapContext = createContext<BootstrapContextValue>({
   data: emptyBootstrap,
   loading: true,
   isRefreshing: false,
+  bootstrapping: true,
   error: null,
 });
 
@@ -35,7 +39,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const pathnameRef = useRef(location.pathname);
   const [data, setData] = useState<SpaBootstrap>(() => hydrateBootstrapCache());
-  const [loading, setLoading] = useState(() => !hasBootstrapData(hydrateBootstrapCache()));
+  const [loading, setLoading] = useState(() => !isBootstrapReady(location.pathname, hydrateBootstrapCache()));
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,7 +53,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     pathnameRef.current = location.pathname;
     const cached = peekBootstrap(location.pathname);
 
-    if (cached && hasBootstrapData(cached)) {
+    if (cached && isBootstrapReady(location.pathname, cached)) {
       setData((prev) => mergeBootstrap(prev, cached));
       setLoading(false);
       setIsRefreshing(true);
@@ -67,7 +71,7 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
       })
       .catch(() => {
         if (cancelled || pathnameRef.current !== location.pathname) return;
-        if (!hasBootstrapData(cached ?? emptyBootstrap)) {
+        if (!isBootstrapReady(location.pathname, cached ?? emptyBootstrap)) {
           setError("Не вдалося завантажити дані");
         }
       })
@@ -82,8 +86,10 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
     };
   }, [location.pathname]);
 
+  const bootstrapping = loading && !isBootstrapReady(location.pathname, data);
+
   return (
-    <BootstrapContext.Provider value={{ data, loading, isRefreshing, error }}>
+    <BootstrapContext.Provider value={{ data, loading, isRefreshing, bootstrapping, error }}>
       {children}
     </BootstrapContext.Provider>
   );

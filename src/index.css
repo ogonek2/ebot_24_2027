@@ -239,6 +239,63 @@ h6 {
   z-index: 1;
 }
 
+/* ─── App bootstrap preloader ─── */
+.app-preloader {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 0%, rgba(249, 113, 113, 0.14), transparent 55%),
+    linear-gradient(165deg, #fff8f5 0%, #f3eeeb 45%, #ffe8e4 100%);
+}
+
+.app-preloader__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.app-preloader__logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  margin-bottom: 1.1rem;
+}
+
+.app-preloader__spinner {
+  width: 28px;
+  height: 28px;
+  border: 2.5px solid rgba(249, 113, 113, 0.25);
+  border-top-color: #f97171;
+  border-radius: 50%;
+  animation: app-preloader-spin 0.7s linear infinite;
+}
+
+.app-preloader__text {
+  margin: 0.85rem 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(26, 26, 46, 0.45);
+  letter-spacing: 0.01em;
+}
+
+@keyframes app-preloader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-preloader__spinner {
+    animation: none;
+    border-top-color: rgba(249, 113, 113, 0.25);
+    border-color: #f97171;
+  }
+}
+
 /* ─── Glass surfaces ───
    IMPORTANT: keep -webkit-backdrop-filter BEFORE backdrop-filter.
    LightningCSS production minify drops the unprefixed property when webkit

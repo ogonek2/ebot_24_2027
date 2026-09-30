@@ -74,3 +74,14 @@ export function hasBootstrapData(data: SpaBootstrap): boolean {
       data.ctaHeaders?.length,
   );
 }
+
+/** Enough data to paint the current route without empty catalog shells. */
+export function isBootstrapReady(pathname: string, data: SpaBootstrap): boolean {
+  if (pathname === "/" || pathname.startsWith("/poslugi-ta-cini")) {
+    return Boolean(data.categories?.length);
+  }
+  if (pathname === "/lokatsii") {
+    return Boolean(data.locationCities?.length || data.branches?.length);
+  }
+  return hasBootstrapData(data);
+}

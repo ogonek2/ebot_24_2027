@@ -62,4 +62,4 @@ export function prefetchBootstrapRoutes(): void {
   prefetch("api:services:all", () => fetchAllServicesCached());
 }
 
-export { mergeBootstrap, hasBootstrapData, bootstrapCacheKey, seedBootstrapCache, CATALOG_CACHE_KEY } from "@/lib/bootstrapCache";
+export { mergeBootstrap, hasBootstrapData, isBootstrapReady, bootstrapCacheKey, seedBootstrapCache, CATALOG_CACHE_KEY } from "@/lib/bootstrapCache";

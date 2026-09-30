@@ -8,17 +8,8 @@ import DeliveryPricingSection from "../components/DeliveryPricingSection";
 import LocationsSection from "../components/LocationsSection";
 import ReviewsSection from "../components/ReviewsSection";
 import CtaSection from "../components/CtaSection";
-import HomeSkeleton from "../components/skeleton/HomeSkeleton";
-import { useBootstrapState } from "@/context/BootstrapContext";
-import { hasBootstrapData } from "@/lib/bootstrapLoader";
 
 export default function HomePage() {
-  const { data, loading } = useBootstrapState();
-
-  if (loading && !hasBootstrapData(data)) {
-    return <HomeSkeleton />;
-  }
-
   return (
     <>
       <HeroSection />

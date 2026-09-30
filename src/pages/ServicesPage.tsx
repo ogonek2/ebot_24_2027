@@ -1,20 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
 import PriceCatalog from "../components/PriceCatalog";
-import PageSkeleton from "../components/skeleton/PageSkeleton";
-import { useBootstrap, useBootstrapState } from "@/context/BootstrapContext";
 import { ROUTES } from "@/lib/routes";
 import { openFeedbackModal } from "@/context/FeedbackContext";
 import CategoriesSection from "@/components/CategoriesSection";
 
 export default function ServicesPage() {
   const navigate = useNavigate();
-  const bootstrap = useBootstrap();
-  const { loading } = useBootstrapState();
-  const hasCatalog = Boolean(bootstrap.categories?.length);
-
-  if (loading && !hasCatalog) {
-    return <PageSkeleton cards={8} columns={2} />;
-  }
 
   return (
     <div className="min-h-screen pt-24 pb-24">

@@ -17,7 +17,16 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div id="boot-splash" style="min-height:100svh;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#fff8f5 0%,#f3eeeb 45%,#ffe8e4 100%);font-family:system-ui,sans-serif">
+        <div style="text-align:center">
+          <img src="/brand/logo-enot24.png" alt="ЄНОТ 24" width="72" height="72" style="display:block;margin:0 auto 1rem;object-fit:contain" />
+          <div style="width:28px;height:28px;margin:0 auto;border:2.5px solid rgba(249,113,113,.25);border-top-color:#f97171;border-radius:50%;animation:boot-spin .7s linear infinite"></div>
+          <p style="margin:.85rem 0 0;font-size:13px;font-weight:600;color:rgba(26,26,46,.45)">Завантажуємо послуги…</p>
+        </div>
+      </div>
+      <style>@keyframes boot-spin{to{transform:rotate(360deg)}}</style>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

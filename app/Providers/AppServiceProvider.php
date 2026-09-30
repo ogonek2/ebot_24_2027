@@ -13,15 +13,32 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot()
     {
-        // Cross-origin SPA (localhost / enot.* → enot-api.*) needs SameSite=None
-        // or browsers reject XSRF/session cookies entirely.
+        /*
+         | SPA (enot-24.com.ua / enot.qpanel-erp.online) and API (enot-api.*)
+         | are cross-site. Browsers reject session/XSRF cookies unless:
+         |   SameSite=None; Secure
+         |
+         | Default ON. Set SESSION_FORCE_CROSS_SITE=false only if SPA+API
+         | are truly same-origin.
+         */
+        $forceCrossSite = filter_var(
+            env('SESSION_FORCE_CROSS_SITE', true),
+            FILTER_VALIDATE_BOOLEAN
+        );
+
+        if ($forceCrossSite) {
+            config([
+                'session.same_site' => 'none',
+                'session.secure' => true,
+            ]);
+            return;
+        }
+
+        // Fallback: auto-detect mismatched FRONTEND_URL vs APP_URL
         $sameSite = strtolower((string) config('session.same_site', 'none'));
         if ($sameSite === '' || $sameSite === 'lax' || $sameSite === 'strict') {
-            $frontend = (string) env('FRONTEND_URL', '');
-            $appUrl = (string) env('APP_URL', '');
-            $frontendHost = $frontend !== '' ? parse_url($frontend, PHP_URL_HOST) : null;
-            $appHost = $appUrl !== '' ? parse_url($appUrl, PHP_URL_HOST) : null;
-
+            $frontendHost = $this->hostFromEnv('FRONTEND_URL');
+            $appHost = $this->hostFromEnv('APP_URL');
             if ($frontendHost && $appHost && $frontendHost !== $appHost) {
                 config([
                     'session.same_site' => 'none',
@@ -33,5 +50,15 @@ class AppServiceProvider extends ServiceProvider
         if (config('session.same_site') === 'none') {
             config(['session.secure' => true]);
         }
+    }
+
+    private function hostFromEnv(string $key): ?string
+    {
+        $url = (string) env($key, '');
+        if ($url === '') {
+            return null;
+        }
+        $host = parse_url($url, PHP_URL_HOST);
+        return is_string($host) && $host !== '' ? strtolower($host) : null;
     }
 }

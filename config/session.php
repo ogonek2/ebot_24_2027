@@ -168,7 +168,7 @@ return [
     |
     */
 
-    'secure' => env('SESSION_SECURE_COOKIE'),
+    'secure' => filter_var(env('SESSION_SECURE_COOKIE', true), FILTER_VALIDATE_BOOLEAN),
 
     /*
     |--------------------------------------------------------------------------
@@ -188,14 +188,14 @@ return [
     | Same-Site Cookies
     |--------------------------------------------------------------------------
     |
-    | This option determines how your cookies behave when cross-site requests
-    | take place, and can be used to mitigate CSRF attacks. By default, we
-    | will set this value to "lax" since this is a secure default value.
+    | Frontend (enot.* / localhost) and API (enot-api.*) are often cross-site.
+    | Default MUST be "none" (+ Secure), otherwise browsers reject session /
+    | XSRF cookies: "SameSite=Lax was rejected in a cross-site context".
     |
     | Supported: "lax", "strict", "none", null
     |
     */
 
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    'same_site' => env('SESSION_SAME_SITE', 'none'),
 
 ];

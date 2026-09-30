@@ -359,22 +359,35 @@ class CartController extends Controller
     }
 
     /**
-     * Отправить заявку на консультацию
+     * Отправить заявку на консультацию (с корзины / legacy endpoint)
      */
     public function submitConsultation(Request $request)
     {
-        $request->validate([
-            'phone' => 'required|string|max:20',
+        $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+            'name' => 'nullable|string|max:255',
+            'phone' => 'required|string|max:40',
+            'message' => 'nullable|string|max:1000',
+        ], [
+            'phone.required' => 'Номер телефону є обов\'язковим полем',
         ]);
 
-        $cart = session('cart', []);
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'errors' => $validator->errors(),
+            ], 422);
+        }
 
-        // Здесь можно отправить уведомление с номером телефона и товарами в корзине
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Заявка на консультацію відправлена'
+        // Reuse the contact pipeline so Telegram delivery is guaranteed
+        $forward = Request::create('/api/contact', 'POST', [
+            'name' => $request->input('name') ?: 'Клієнт',
+            'phone' => $request->input('phone'),
+            'message' => $request->input('message'),
+            'source' => 'consultation',
         ]);
+        $forward->headers->replace($request->headers->all());
+
+        return app(FeedbackController::class)->submit($forward);
     }
 
     /**

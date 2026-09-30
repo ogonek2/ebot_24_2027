@@ -130,10 +130,9 @@ class FeedbackController extends Controller
             $request->merge(['popup_modal_id' => null]);
         }
 
-        // Validate the request
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:40',
             'message' => 'nullable|string|max:1000',
             'source' => 'nullable|string|max:50',
             'popup_modal_id' => 'nullable|integer|exists:popup_modals,id',
@@ -141,7 +140,7 @@ class FeedbackController extends Controller
             'name.required' => 'Ім\'я є обов\'язковим полем',
             'name.max' => 'Ім\'я не може перевищувати 255 символів',
             'phone.required' => 'Номер телефону є обов\'язковим полем',
-            'phone.max' => 'Номер телефону не може перевищувати 20 символів',
+            'phone.max' => 'Номер телефону не може перевищувати 40 символів',
             'message.max' => 'Повідомлення не може перевищувати 1000 символів',
         ]);
 
@@ -153,10 +152,8 @@ class FeedbackController extends Controller
         }
 
         try {
-            // Determine form type based on request
             $formType = $this->determineFormType($request);
-            
-            // Send notification to Telegram
+
             $this->sendTelegramNotification(
                 $request->name,
                 $request->phone,
@@ -170,8 +167,13 @@ class FeedbackController extends Controller
                 'success' => true,
                 'message' => 'Дякуємо! Ми зв\'яжемося з вами найближчим часом.'
             ]);
-
         } catch (\Exception $e) {
+            \Log::error('Contact form failed', [
+                'error' => $e->getMessage(),
+                'name' => $request->name,
+                'phone' => $request->phone,
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Виникла помилка при відправці повідомлення. Спробуйте пізніше.'
@@ -184,7 +186,6 @@ class FeedbackController extends Controller
      */
     private function determineFormType($request)
     {
-        // Check if it's from promotion modal
         if ($request->has('source') && $request->source === 'promotion_modal') {
             return 'promotion_modal';
         }
@@ -192,88 +193,105 @@ class FeedbackController extends Controller
         if ($request->has('source') && $request->source === 'scheduled_popup_modal') {
             return 'scheduled_popup_modal';
         }
-        
-        // Check if it's consultation form (has name_fd field)
-        if ($request->has('name_fd')) {
+
+        if ($request->input('source') === 'consultation' || $request->has('name_fd')) {
             return 'consultation';
         }
-        
-        // Check if it's courier form (has message field and specific structure)
-        if ($request->has('message') && !$request->has('name_fd')) {
-            return 'courier';
-        }
-        
-        // Default to feedback form
+
+        // Default feedback / modal contact — never mis-label as courier
+        // just because an optional "message" field is present.
         return 'feedback';
     }
 
     /**
-     * Send notification to Telegram
+     * Send notification to Telegram. Throws if delivery fails — callers must not fake success.
      */
     private function sendTelegramNotification($name, $phone, $message, $formType = 'feedback', $source = null, $popupModalId = null)
     {
-        // Check if Telegram notifications are enabled
-        if (!config('telegram.enabled', true)) {
-            return;
-        }
-        
-        $botToken = config('telegram.bot_token');
-        $chatId = config('telegram.chat_id');
-        
-        // Different messages for different form types
         $formTitles = [
-            'feedback' => "🆕 *Нове повідомлення зворотнього зв'язку*",
-            'consultation' => "📞 *Заявка на консультацію*",
-            'courier' => "🚚 *Заявка на консультацію*",
-            'promotion_modal' => "🎁 *Заявка з модального вікна акції*",
-            'scheduled_popup_modal' => "🪟 *Заявка з запланованого банерного поп-апу*",
+            'feedback' => "🆕 Нове повідомлення зворотнього зв'язку",
+            'consultation' => '📞 Заявка на консультацію',
+            'courier' => '🚚 Заявка на консультацію',
+            'promotion_modal' => '🎁 Заявка з модального вікна акції',
+            'scheduled_popup_modal' => '🪟 Заявка з запланованого банерного поп-апу',
         ];
-        
-        $text = $formTitles[$formType] . "\n\n";
-        $text .= "👤 *Ім'я:* " . $name . "\n";
-        $text .= "📞 *Телефон:* " . $phone . "\n";
-        
+
+        $text = ($formTitles[$formType] ?? $formTitles['feedback']) . "\n\n";
+        $text .= "👤 Ім'я: " . $name . "\n";
+        $text .= "📞 Телефон: " . $phone . "\n";
+
         if (!empty($message)) {
-            $text .= "💬 *Повідомлення:* " . $message . "\n";
+            $text .= "💬 Повідомлення: " . $message . "\n";
+        }
+
+        if (!empty($source)) {
+            $text .= "🏷 Джерело: " . $source . "\n";
         }
 
         if (!empty($popupModalId)) {
-            $text .= "🆔 *Поп-ап ID:* " . $popupModalId . "\n";
+            $text .= "🆔 Поп-ап ID: " . $popupModalId . "\n";
         }
-        
-        $text .= "\n⏰ *Час:* " . now()->format('d.m.Y H:i:s');
-        
+
+        $text .= "\n⏰ Час: " . now()->format('d.m.Y H:i:s');
+
+        $this->dispatchTelegram($text);
+    }
+
+    /**
+     * Low-level Telegram send. Fails loudly when misconfigured or API errors.
+     */
+    private function dispatchTelegram(string $text): void
+    {
+        if (!config('telegram.enabled', true)) {
+            \Log::error('Telegram notifications disabled — lead was NOT delivered', [
+                'preview' => mb_substr($text, 0, 120),
+            ]);
+            throw new \Exception('Telegram notifications are disabled');
+        }
+
+        $botToken = trim((string) config('telegram.bot_token'));
+        $chatId = trim((string) config('telegram.chat_id'));
+
+        if ($botToken === '' || $chatId === '') {
+            \Log::error('Telegram bot token or chat ID missing — lead was NOT delivered');
+            throw new \Exception('Telegram is not configured');
+        }
+
         $data = [
             'chat_id' => $chatId,
             'text' => $text,
-            'parse_mode' => 'Markdown'
+            // Plain text — Markdown broke on phones like +380 (67) … and names with _
         ];
-        
+
         $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-        
+
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+
         $result = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $curlError = curl_error($ch);
         curl_close($ch);
-        
-        if ($httpCode !== 200) {
+
+        $ok = false;
+        if (is_string($result) && $result !== '') {
+            $decoded = json_decode($result, true);
+            $ok = is_array($decoded) && !empty($decoded['ok']);
+        }
+
+        if ($httpCode !== 200 || !$ok) {
             \Log::error('Telegram notification failed', [
                 'http_code' => $httpCode,
                 'curl_error' => $curlError,
-                'response' => $result
+                'response' => $result,
             ]);
-            throw new \Exception('Failed to send Telegram notification: ' . $curlError);
+            throw new \Exception('Failed to send Telegram notification: ' . ($curlError ?: "HTTP {$httpCode}"));
         }
-        
-        return $result;
     }
 
     /**
@@ -287,57 +305,20 @@ class FeedbackController extends Controller
         $volume,
         $comment = null
     ) {
-        if (!config('telegram.enabled', true)) {
-            return;
-        }
-
-        $botToken = config('telegram.bot_token');
-        $chatId = config('telegram.chat_id');
-
-        $text = "🏢 *Корпоративна заявка B2B*\n\n";
-        $text .= "🏭 *Компанія:* " . $company . "\n";
-        $text .= "👤 *Контакт:* " . $name . "\n";
-        $text .= "📞 *Телефон:* " . $phone . "\n";
-        $text .= "✉️ *Email:* " . $email . "\n";
-        $text .= "📊 *Обсяг на місяць:* " . $volume . "\n";
+        $text = "🏢 Корпоративна заявка B2B\n\n";
+        $text .= "🏭 Компанія: " . $company . "\n";
+        $text .= "👤 Контакт: " . $name . "\n";
+        $text .= "📞 Телефон: " . $phone . "\n";
+        $text .= "✉️ Email: " . $email . "\n";
+        $text .= "📊 Обсяг на місяць: " . $volume . "\n";
 
         if (!empty($comment)) {
-            $text .= "💬 *Коментар:* " . $comment . "\n";
+            $text .= "💬 Коментар: " . $comment . "\n";
         }
 
-        $text .= "\n⏰ *Час:* " . now()->format('d.m.Y H:i:s');
+        $text .= "\n⏰ Час: " . now()->format('d.m.Y H:i:s');
 
-        $data = [
-            'chat_id' => $chatId,
-            'text' => $text,
-            'parse_mode' => 'Markdown',
-        ];
-
-        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-        $result = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            \Log::error('Telegram B2B notification failed', [
-                'http_code' => $httpCode,
-                'curl_error' => $curlError,
-                'response' => $result,
-            ]);
-            throw new \Exception('Failed to send Telegram notification: ' . $curlError);
-        }
-
-        return $result;
+        $this->dispatchTelegram($text);
     }
 
     /**
@@ -352,68 +333,31 @@ class FeedbackController extends Controller
         $time = null,
         $comment = null
     ) {
-        if (!config('telegram.enabled', true)) {
-            return;
-        }
-
-        $botToken = config('telegram.bot_token');
-        $chatId = config('telegram.chat_id');
-
         $typeLabel = $type === 'courier' ? "Кур'єр до дверей" : 'Самовивіз';
 
-        $text = "🚚 *Заявка на хімчистку*\n\n";
-        $text .= "👤 *Ім'я:* " . $name . "\n";
-        $text .= "📞 *Телефон:* " . $phone . "\n";
-        $text .= "📦 *Спосіб:* " . $typeLabel . "\n";
+        $text = "🚚 Заявка на хімчистку\n\n";
+        $text .= "👤 Ім'я: " . $name . "\n";
+        $text .= "📞 Телефон: " . $phone . "\n";
+        $text .= "📦 Спосіб: " . $typeLabel . "\n";
 
         if (!empty($address)) {
-            $text .= "📍 *Адреса:* " . $address . "\n";
+            $text .= "📍 Адреса: " . $address . "\n";
         }
 
         if (!empty($date)) {
-            $text .= "📅 *Дата:* " . $date . "\n";
+            $text .= "📅 Дата: " . $date . "\n";
         }
 
         if (!empty($time)) {
-            $text .= "🕐 *Час:* " . $time . "\n";
+            $text .= "🕐 Час: " . $time . "\n";
         }
 
         if (!empty($comment)) {
-            $text .= "💬 *Коментар:* " . $comment . "\n";
+            $text .= "💬 Коментар: " . $comment . "\n";
         }
 
-        $text .= "\n⏰ *Час заявки:* " . now()->format('d.m.Y H:i:s');
+        $text .= "\n⏰ Час заявки: " . now()->format('d.m.Y H:i:s');
 
-        $data = [
-            'chat_id' => $chatId,
-            'text' => $text,
-            'parse_mode' => 'Markdown',
-        ];
-
-        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
-
-        $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
-        curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-
-        $result = curl_exec($ch);
-        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        $curlError = curl_error($ch);
-        curl_close($ch);
-
-        if ($httpCode !== 200) {
-            \Log::error('Telegram courier notification failed', [
-                'http_code' => $httpCode,
-                'curl_error' => $curlError,
-                'response' => $result,
-            ]);
-            throw new \Exception('Failed to send Telegram notification: ' . $curlError);
-        }
-
-        return $result;
+        $this->dispatchTelegram($text);
     }
 }

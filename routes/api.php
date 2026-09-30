@@ -43,6 +43,7 @@ Route::get('/promotions-banner', [PromotionController::class, 'getPromotionsForB
 Route::post('/contact', [App\Http\Controllers\FeedbackController::class, 'submit']);
 Route::post('/b2b/proposal', [App\Http\Controllers\FeedbackController::class, 'submitB2bProposal']);
 Route::post('/courier/request', [App\Http\Controllers\FeedbackController::class, 'submitCourierOrder']);
+Route::post('/lead-log', [App\Http\Controllers\LeadLogController::class, 'store']);
 
 /*
 | SPA CSRF: plain token for X-CSRF-TOKEN (after GET /sanctum/csrf-cookie).

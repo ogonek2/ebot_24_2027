@@ -92,6 +92,7 @@ type ApiErrorBody = {
 const CSRF_EXEMPT_PREFIXES = [
   "/api/contact",
   "/api/order/consultation",
+  "/api/order/submit",
   "/api/courier/request",
   "/api/b2b/proposal",
   "/api/lead-log",
@@ -595,29 +596,6 @@ export function fetchPickupLocationsCached() {
   return cachedFetch("api:pickup-locations", () => getPickupLocations());
 }
 
-export async function submitOrder(data: Record<string, unknown>) {
-  logLeadEvent("checkout", "attempt", data);
-  try {
-    await ensureCsrf(true);
-    const res = await apiFetch("/api/order/submit", {
-      method: "POST",
-      body: JSON.stringify(data),
-    });
-    const json = (await res.json()) as { success: boolean; order_id?: string; message?: string };
-    if (json.success) {
-      logLeadEvent("checkout", "success", { ...data, order_id: json.order_id ?? null });
-    } else {
-      logLeadEvent("checkout", "error", data, { error: json.message ?? "success!==true" });
-    }
-    return json;
-  } catch (err) {
-    logLeadEvent("checkout", "error", data, {
-      error: err instanceof Error ? err.message : "network",
-    });
-    throw err;
-  }
-}
-
 export type LastOrderItem = {
   service_id?: number | null;
   repair_item_id?: number | null;
@@ -646,10 +624,47 @@ export type LastOrder = {
   created_at: string;
 };
 
+export async function submitOrder(data: Record<string, unknown>) {
+  logLeadEvent("checkout", "attempt", {
+    name: data.name,
+    phone: data.phone,
+    delivery_method: data.delivery_method,
+    items_count: Array.isArray(data.items) ? data.items.length : 0,
+  });
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      order_id?: string;
+      message?: string;
+      order?: LastOrder;
+    }>("/api/order/submit", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    if (res.success === true) {
+      logLeadEvent("checkout", "success", {
+        name: data.name,
+        phone: data.phone,
+        order_id: res.order_id ?? null,
+      });
+    } else {
+      logLeadEvent("checkout", "error", { name: data.name, phone: data.phone }, {
+        error: res.message ?? "success!==true",
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("checkout", "error", { name: data.name, phone: data.phone }, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
+}
+
 export async function getLastOrder(orderId?: string) {
-  const qs = orderId ? `?order_id=${encodeURIComponent(orderId)}` : "";
-  const res = await fetch(apiUrl(`/api/order/last${qs}`), {
-    credentials: "include",
+  if (!orderId) return null;
+  const res = await fetch(apiUrl(`/api/order/last?order_id=${encodeURIComponent(orderId)}`), {
+    credentials: "omit",
     headers: { Accept: "application/json", "X-Requested-With": "XMLHttpRequest" },
   });
   if (res.status === 404) return null;

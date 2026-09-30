@@ -5,18 +5,15 @@ import OrderLoadingModal from "@/components/cart/OrderLoadingModal";
 import PickupLocationSelect, { type PickupLocation } from "@/components/cart/PickupLocationSelect";
 import CheckoutSkeleton from "@/components/skeleton/CheckoutSkeleton";
 import { useCart } from "@/context/CartContext";
-import {
-  fetchPickupLocationsCached,
-  removeFromCart,
-  submitOrder,
-  updateCart,
-} from "@/lib/api";
+import { fetchPickupLocationsCached, submitOrder } from "@/lib/api";
 import { cleaningTypeLabel, formatUah } from "@/lib/cartPrices";
+import { saveLastOrderSnapshot, toCheckoutItems } from "@/lib/localCart";
 import { ROUTES } from "@/lib/routes";
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { items, total, loading, refresh } = useCart();
+  const { items, total, loading, refresh, updateQuantity, removeItem, clear, getCheckoutLines } =
+    useCart();
   const [locations, setLocations] = useState<PickupLocation[]>([]);
   const [locationsReady, setLocationsReady] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -36,15 +33,13 @@ export default function CartPage() {
       .finally(() => setLocationsReady(true));
   }, []);
 
-  const handleQtyChange = async (key: string, quantity: number) => {
+  const handleQtyChange = (key: string, quantity: number) => {
     if (quantity < 1) return;
-    await updateCart(key, quantity);
-    await refresh();
+    updateQuantity(key, quantity);
   };
 
-  const handleRemove = async (key: string) => {
-    await removeFromCart(key);
-    await refresh();
+  const handleRemove = (key: string) => {
+    removeItem(key);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -60,6 +55,12 @@ export default function CartPage() {
       return;
     }
 
+    const checkoutLines = getCheckoutLines();
+    if (!checkoutLines.length) {
+      setFormError("Корзина порожня");
+      return;
+    }
+
     setSubmitting(true);
     setShowLoadingModal(true);
 
@@ -68,6 +69,7 @@ export default function CartPage() {
         name: form.name.trim(),
         phone: form.phone.trim(),
         delivery_method: form.delivery_method,
+        items: toCheckoutItems(checkoutLines),
       };
       if (form.delivery_method === "self") {
         payload.pickup_location_id = form.pickup_location_id;
@@ -76,15 +78,15 @@ export default function CartPage() {
       }
 
       const res = await submitOrder(payload);
-      if (res.success) {
+      if (res.success === true && res.order_id) {
+        if (res.order) {
+          saveLastOrderSnapshot(res.order);
+        }
+        clear();
         await refresh();
         window.setTimeout(() => {
           setShowLoadingModal(false);
-          if (res.order_id) {
-            navigate(`${ROUTES.orderSuccess}/${res.order_id}`);
-          } else {
-            navigate(ROUTES.orderSuccess);
-          }
+          navigate(`${ROUTES.orderSuccess}/${res.order_id}`);
         }, 1400);
       } else {
         setShowLoadingModal(false);

@@ -5,6 +5,7 @@ import CategoryIcon from "@/components/CategoryIcon";
 import { useAppNavigate } from "@/lib/navigation";
 import { getLastOrder, invoiceDownloadUrl, type LastOrder } from "@/lib/api";
 import { cleaningTypeLabel, formatUah } from "@/lib/cartPrices";
+import { loadLastOrderSnapshot } from "@/lib/localCart";
 import { ROUTES } from "@/lib/routes";
 
 export default function OrderSuccessPage() {
@@ -16,21 +17,36 @@ export default function OrderSuccessPage() {
 
   useEffect(() => {
     let cancelled = false;
+
+    const cached = loadLastOrderSnapshot<LastOrder>(paramOrderId);
+    if (cached) {
+      setOrder(cached);
+      setLoading(false);
+    }
+
+    if (!paramOrderId) {
+      if (!cached) setNotFound(true);
+      setLoading(false);
+      return;
+    }
+
     getLastOrder(paramOrderId)
       .then((data) => {
         if (cancelled) return;
-        if (!data) {
-          setNotFound(true);
-        } else {
+        if (data) {
           setOrder(data);
+          setNotFound(false);
+        } else if (!cached) {
+          setNotFound(true);
         }
       })
       .catch(() => {
-        if (!cancelled) setNotFound(true);
+        if (!cancelled && !cached) setNotFound(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };

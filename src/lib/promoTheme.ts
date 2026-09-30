@@ -43,9 +43,12 @@ export function isColorLight(color?: string | null): boolean {
 export function promoCardTheme(promo: Promotion): PromoCardTheme {
   const bg = promo.color?.trim() || "#ffffff";
   const isLight = isColorLight(bg);
-  const title = promo.textColor?.trim() || (isLight ? "#1a1a2e" : "#ffffff");
+  let title = promo.textColor?.trim() || (isLight ? "#1a1a2e" : "#ffffff");
+  // API sometimes sends white-on-white / dark-on-dark — force readable contrast
+  if (isLight && isColorLight(title)) title = "#1a1a2e";
+  if (!isLight && !isColorLight(title)) title = "#ffffff";
   const discount = promo.discountColor?.trim() || (isLight ? "#f97171" : "#ffb4a8");
-  const meta = promo.textColor?.trim() || (isLight ? "rgba(26, 26, 46, 0.62)" : "rgba(255, 255, 255, 0.78)");
+  const meta = isLight ? "rgba(26, 26, 46, 0.62)" : "rgba(255, 255, 255, 0.78)";
 
   return {
     bg,

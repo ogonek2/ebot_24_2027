@@ -10,16 +10,21 @@ export default function PromoSection() {
 
   if (!discounts.length) return null;
 
-  const items: Promotion[] = discounts.slice(0, 4).map((d) => ({
-    id: d.id,
-    name: d.name,
-    discountAction: d.discountAction,
-    locations: d.locations,
-    banner: d.banner,
-    color: d.color,
-    textColor: d.textColor,
-    discountColor: d.discountColor,
-  }));
+  const items: Promotion[] = discounts
+    .filter((d) => Boolean(d.name?.trim()))
+    .slice(0, 4)
+    .map((d) => ({
+      id: d.id,
+      name: d.name,
+      discountAction: d.discountAction,
+      locations: d.locations,
+      banner: d.banner,
+      color: d.color,
+      textColor: d.textColor,
+      discountColor: d.discountColor,
+    }));
+
+  if (!items.length) return null;
 
   return (
     <section className="py-14 sm:py-16" id="promo">

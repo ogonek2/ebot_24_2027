@@ -73,7 +73,7 @@ export default function CategoriesSection() {
                     className="glass-card group w-full text-center p-4 sm:p-5 h-full no-underline block"
                   >
                     <div className="w-14 h-14 flex items-center justify-center mx-auto mb-3 transition-transform duration-500 group-hover:scale-110 overflow-hidden">
-                      <CategoryIcon src={cat.iconUrl} size={50} alt={cat.title} />
+                      <CategoryIcon src={cat.iconUrl} size={50} alt={cat.title} eager={i < 6} />
                     </div>
                     <div className="font-bold text-[13px] xl:text-[14px] text-[#1A1A2E] mb-1 leading-snug">
                       {cat.title}

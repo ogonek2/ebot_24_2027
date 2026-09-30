@@ -8,18 +8,24 @@ import DeliveryPricingSection from "../components/DeliveryPricingSection";
 import LocationsSection from "../components/LocationsSection";
 import ReviewsSection from "../components/ReviewsSection";
 import CtaSection from "../components/CtaSection";
+import { useBootstrap } from "@/context/BootstrapContext";
 
 export default function HomePage() {
+  const { categories = [], discounts = [], blogPosts = [], branches = [] } = useBootstrap();
+  const hasCatalog = categories.some(
+    (c) => (c.items?.length ?? 0) > 0 || Boolean(c.repairPriceList?.sections?.length),
+  );
+
   return (
     <>
       <HeroSection />
-      <PromoSection />
-      <ServicesSection />
-      <CategoriesSection />
+      {discounts.length > 0 && <PromoSection />}
+      {hasCatalog && <ServicesSection />}
+      {hasCatalog && <CategoriesSection />}
       <ConsultationSection />
-      <BlogSection />
+      {blogPosts.length > 0 && <BlogSection />}
       <DeliveryPricingSection />
-      <LocationsSection />
+      {branches.length > 0 && <LocationsSection />}
       <ReviewsSection />
       <CtaSection />
     </>

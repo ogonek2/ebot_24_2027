@@ -77,11 +77,27 @@ export function hasBootstrapData(data: SpaBootstrap): boolean {
 
 /** Enough data to paint the current route without empty catalog shells. */
 export function isBootstrapReady(pathname: string, data: SpaBootstrap): boolean {
-  if (pathname === "/" || pathname.startsWith("/poslugi-ta-cini")) {
-    return Boolean(data.categories?.length);
+  const cats = data.categories ?? [];
+  const hasCatalogItems = cats.some(
+    (c) => (c.items?.length ?? 0) > 0 || Boolean(c.repairPriceList?.sections?.length),
+  );
+
+  if (pathname === "/") {
+    // Home needs a real catalog. Partial/catalog-only caches must not unlock the shell.
+    return hasCatalogItems;
+  }
+  if (pathname.startsWith("/poslugi-ta-cini")) {
+    return hasCatalogItems;
   }
   if (pathname === "/lokatsii") {
     return Boolean(data.locationCities?.length || data.branches?.length);
   }
-  return hasBootstrapData(data);
+  if (pathname.startsWith("/aktsii")) {
+    return Boolean(data.discounts?.length || hasCatalogItems);
+  }
+  if (pathname.startsWith("/blog")) {
+    return Boolean(data.blogPosts?.length || hasCatalogItems);
+  }
+  // Legal / contacts / courier etc. — shell can render without catalog
+  return true;
 }

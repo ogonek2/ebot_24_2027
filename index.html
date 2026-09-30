@@ -1,32 +1,61 @@
 <!DOCTYPE html>
 <html lang="uk">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="google-site-verification" content="-Tye_Cwi5cK0K8x7A1C8Heuxg5Nmxgjh-H5j3vGd6gQ" />
-    <meta property="og:type" content="website" />
-    <meta property="og:image" content="/brand/enot-white-bg.png" />
-    <link rel="shortcut icon" href="/brand/logo-enot24.png" type="image/png" />
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#FF2D6A" />
-    <title>ЄНОТ-24</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Russo+One&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
-  </head>
-  <body>
-    <div id="root">
-      <div id="boot-splash" style="min-height:100svh;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#fff8f5 0%,#f3eeeb 45%,#ffe8e4 100%);font-family:system-ui,sans-serif">
-        <div style="text-align:center">
-          <img src="/brand/logo-enot24.png" alt="ЄНОТ 24" width="72" height="72" style="display:block;margin:0 auto 1rem;object-fit:contain" />
-          <div style="width:28px;height:28px;margin:0 auto;border:2.5px solid rgba(249,113,113,.25);border-top-color:#f97171;border-radius:50%;animation:boot-spin .7s linear infinite"></div>
-          <p style="margin:.85rem 0 0;font-size:13px;font-weight:600;color:rgba(26,26,46,.45)">Завантажуємо послуги…</p>
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google-site-verification" content="-Tye_Cwi5cK0K8x7A1C8Heuxg5Nmxgjh-H5j3vGd6gQ" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="/brand/enot-white-bg.png" />
+  <link rel="shortcut icon" href="/brand/logo-enot24.png" type="image/png" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="#FF2D6A" />
+  <title>ЄНОТ-24</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Russo+One&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+
+  <!-- Google Tag Manager -->
+  <script>(function (w, d, s, l, i) {
+      w[l] = w[l] || []; w[l].push({
+        'gtm.start':
+          new Date().getTime(), event: 'gtm.js'
+      }); var f = d.getElementsByTagName(s)[0],
+        j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+          'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+    })(window, document, 'script', 'dataLayer', 'GTM-N29G5VKN');</script>
+  <!-- End Google Tag Manager -->
+</head>
+
+<body>
+  <!-- Google Tag Manager (noscript) -->
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-N29G5VKN" height="0" width="0"
+      style="display:none;visibility:hidden"></iframe></noscript>
+  <!-- End Google Tag Manager (noscript) -->
+  <div id="root">
+    <div id="boot-splash"
+      style="min-height:100svh;display:flex;align-items:center;justify-content:center;background:linear-gradient(165deg,#fff8f5 0%,#f3eeeb 45%,#ffe8e4 100%);font-family:system-ui,sans-serif">
+      <div style="text-align:center">
+        <img src="/brand/logo-enot24.png" alt="ЄНОТ 24" width="72" height="72"
+          style="display:block;margin:0 auto 1rem;object-fit:contain" />
+        <div
+          style="width:28px;height:28px;margin:0 auto;border:2.5px solid rgba(249,113,113,.25);border-top-color:#f97171;border-radius:50%;animation:boot-spin .7s linear infinite">
         </div>
+        <p style="margin:.85rem 0 0;font-size:13px;font-weight:600;color:rgba(26,26,46,.45)">Завантажуємо послуги…</p>
       </div>
-      <style>@keyframes boot-spin{to{transform:rotate(360deg)}}</style>
     </div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+    <style>
+      @keyframes boot-spin {
+        to {
+          transform: rotate(360deg)
+        }
+      }
+    </style>
+  </div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>

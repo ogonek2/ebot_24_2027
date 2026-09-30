@@ -22,7 +22,7 @@ type BootstrapContextValue = {
   data: SpaBootstrap;
   loading: boolean;
   isRefreshing: boolean;
-  /** True until first paint-ready bootstrap for the current route. */
+  /** True until paint-ready bootstrap exists for the current route. */
   bootstrapping: boolean;
   error: string | null;
 };
@@ -35,11 +35,13 @@ const BootstrapContext = createContext<BootstrapContextValue>({
   error: null,
 });
 
+const BOOT_TIMEOUT_MS = 15_000;
+
 export function BootstrapProvider({ children }: { children: ReactNode }) {
   const location = useLocation();
   const pathnameRef = useRef(location.pathname);
   const [data, setData] = useState<SpaBootstrap>(() => hydrateBootstrapCache());
-  const [loading, setLoading] = useState(() => !isBootstrapReady(location.pathname, hydrateBootstrapCache()));
+  const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,16 +54,26 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     pathnameRef.current = location.pathname;
     const cached = peekBootstrap(location.pathname);
+    const cacheReady = Boolean(cached && isBootstrapReady(location.pathname, cached));
 
-    if (cached && isBootstrapReady(location.pathname, cached)) {
+    if (cacheReady && cached) {
       setData((prev) => mergeBootstrap(prev, cached));
-      setLoading(false);
       setIsRefreshing(true);
+      setLoading(false);
     } else {
       setLoading(true);
+      setIsRefreshing(false);
     }
 
     let cancelled = false;
+    const timeoutId = cacheReady
+      ? 0
+      : window.setTimeout(() => {
+          if (cancelled || pathnameRef.current !== location.pathname) return;
+          setError((prev) => prev ?? "Не вдалося завантажити дані");
+          setLoading(false);
+          setIsRefreshing(false);
+        }, BOOT_TIMEOUT_MS);
 
     loadBootstrap(location.pathname)
       .then((fresh) => {
@@ -79,14 +91,21 @@ export function BootstrapProvider({ children }: { children: ReactNode }) {
         if (cancelled || pathnameRef.current !== location.pathname) return;
         setLoading(false);
         setIsRefreshing(false);
+        if (timeoutId) window.clearTimeout(timeoutId);
       });
 
     return () => {
       cancelled = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
     };
+    // intentionally only pathname — data in timeout is best-effort failsafe
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname]);
 
-  const bootstrapping = loading && !isBootstrapReady(location.pathname, data);
+  const ready = isBootstrapReady(location.pathname, data);
+  // Keep full-screen preloader until catalog (etc.) is actually paint-ready.
+  // Do not unlock on loading=false alone — incomplete cache used to do that.
+  const bootstrapping = !ready && !error;
 
   return (
     <BootstrapContext.Provider value={{ data, loading, isRefreshing, bootstrapping, error }}>

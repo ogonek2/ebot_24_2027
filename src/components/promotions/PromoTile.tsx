@@ -26,7 +26,15 @@ export default function PromoTile({ promo, lead = false }: Props) {
       className={`promo-home-tile no-underline group ${lead ? "promo-home-tile--lead" : ""}`}
       style={style}
     >
-      {promo.banner && <img src={promo.banner} alt="" className="promo-home-tile__banner" loading="lazy" />}
+      {promo.banner && (
+        <img
+          src={promo.banner}
+          alt=""
+          className="promo-home-tile__banner"
+          loading={lead ? "eager" : "lazy"}
+          decoding="async"
+        />
+      )}
       <span className="promo-home-tile__pattern" aria-hidden />
       {promo.discountAction && <span className="promo-home-tile__badge">{promo.discountAction}</span>}
       <span className="promo-home-tile__title">

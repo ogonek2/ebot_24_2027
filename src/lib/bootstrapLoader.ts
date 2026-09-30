@@ -6,8 +6,15 @@ import {
   mergeBootstrap,
   seedBootstrapCache,
 } from "@/lib/bootstrapCache";
-import { cachedFetch, getCached, prefetch, setCached } from "@/lib/cache";
-import { fetchBootstrap, fetchBlogAllCached, fetchLocationsCached, fetchPromotionsCached, fetchB2bItemsCached, fetchAllServicesCached } from "@/lib/api";
+import { getCached, prefetch, setCached } from "@/lib/cache";
+import {
+  fetchBootstrap,
+  fetchBlogAllCached,
+  fetchLocationsCached,
+  fetchPromotionsCached,
+  fetchB2bItemsCached,
+  fetchAllServicesCached,
+} from "@/lib/api";
 import { emptyBootstrap, getBootstrap, type SpaBootstrap } from "@/lib/bootstrap";
 
 function seedRelatedApiCache(data: SpaBootstrap): void {
@@ -38,14 +45,18 @@ export function hydrateBootstrapCache(): SpaBootstrap {
   return getBootstrapFromCache("/") ?? emptyBootstrap;
 }
 
+/**
+ * Always hit the network and refresh cache.
+ * Instant paint uses peekBootstrap/hydrate — never skip revalidation via cachedFetch
+ * (that left incomplete catalog shells on screen for the full TTL).
+ */
 export async function loadBootstrap(pathname: string): Promise<SpaBootstrap> {
   const key = bootstrapCacheKey(pathname);
-  return cachedFetch(key, async () => {
-    const fresh = await fetchBootstrap(pathname);
-    seedBootstrapCache(fresh, pathname);
-    seedRelatedApiCache(fresh);
-    return fresh;
-  });
+  const fresh = await fetchBootstrap(pathname);
+  seedBootstrapCache(fresh, pathname);
+  seedRelatedApiCache(fresh);
+  setCached(key, fresh);
+  return fresh;
 }
 
 export function peekBootstrap(pathname: string): SpaBootstrap | null {
@@ -62,4 +73,11 @@ export function prefetchBootstrapRoutes(): void {
   prefetch("api:services:all", () => fetchAllServicesCached());
 }
 
-export { mergeBootstrap, hasBootstrapData, isBootstrapReady, bootstrapCacheKey, seedBootstrapCache, CATALOG_CACHE_KEY } from "@/lib/bootstrapCache";
+export {
+  mergeBootstrap,
+  hasBootstrapData,
+  isBootstrapReady,
+  bootstrapCacheKey,
+  seedBootstrapCache,
+  CATALOG_CACHE_KEY,
+} from "@/lib/bootstrapCache";

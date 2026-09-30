@@ -11,6 +11,8 @@ interface CategoryIconProps {
   alt?: string;
   /** When true, use bundled PNG if `src` is missing. Default false for API-driven UI. */
   fallback?: boolean;
+  /** Above-the-fold icons should not wait for lazy load. */
+  eager?: boolean;
 }
 
 export default function CategoryIcon({
@@ -20,6 +22,7 @@ export default function CategoryIcon({
   className = "",
   alt = "",
   fallback = false,
+  eager = false,
 }: CategoryIconProps) {
   const resolvedSrc = resolveStorageUrl(src);
   const imageSrc = resolvedSrc || (fallback && name ? icons[name] : null);
@@ -44,7 +47,9 @@ export default function CategoryIcon({
       className={className}
       style={{ width: size, height: size, objectFit: "contain" }}
       draggable={false}
-      loading="lazy"
+      loading={eager ? "eager" : "lazy"}
+      decoding="async"
+      fetchPriority={eager ? "high" : "auto"}
     />
   );
 }

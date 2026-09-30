@@ -99,17 +99,14 @@ export default function B2BPage() {
         comment: b2bForm.comment.trim() || undefined,
       });
 
-      if (res.success === false && res.errors) {
-        const next: FieldErrors = {};
-        for (const [key, msgs] of Object.entries(res.errors)) {
-          if (key in b2bForm) next[key as B2bFormFields] = msgs[0];
+      if (res.success !== true) {
+        if (res.errors) {
+          const next: FieldErrors = {};
+          for (const [key, msgs] of Object.entries(res.errors)) {
+            if (key in b2bForm) next[key as B2bFormFields] = msgs[0];
+          }
+          setFieldErrors(next);
         }
-        setFieldErrors(next);
-        setStatus("idle");
-        return;
-      }
-
-      if (res.success === false) {
         setFormError(res.message ?? "Виникла помилка при відправці. Спробуйте пізніше.");
         setStatus("idle");
         return;

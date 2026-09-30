@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Reveal from "./Reveal";
 import { submitContact } from "@/lib/api";
+import { logLeadEvent } from "@/lib/leadLogger";
 import {
   formatUaPhoneInput,
   isUaPhoneComplete,
@@ -19,18 +20,25 @@ export default function ConsultationSection() {
 
     if (!form.name.trim()) {
       setError("Введіть ім'я");
+      logLeadEvent("contact", "validation", { name: form.name, phone: form.phone }, { error: "empty_name" });
       return;
     }
     if (!isUaPhoneComplete(form.phone)) {
       setError("Введіть коректний номер телефону");
+      logLeadEvent(
+        "contact",
+        "validation",
+        { name: form.name.trim(), phone: form.phone },
+        { error: "invalid_phone" },
+      );
       return;
     }
 
     setLoading(true);
     try {
       const res = await submitContact(form.name.trim(), form.phone);
-      if (res.success === false) {
-        setError(res.message ?? "Помилка відправки");
+      if (res.success !== true) {
+        setError(res.message ?? "Помилка відправки. Спробуйте ще раз.");
         return;
       }
       setSent(true);

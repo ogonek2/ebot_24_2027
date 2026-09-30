@@ -71,19 +71,16 @@ export default function OrderPage() {
         comment: form.comment.trim() || undefined,
       });
 
-      if (res.success === false && res.errors) {
-        const next: FieldErrors = {};
-        for (const [key, msgs] of Object.entries(res.errors)) {
-          if (key in form) next[key as FormFields] = msgs[0];
+      if (res.success !== true) {
+        if (res.errors) {
+          const next: FieldErrors = {};
+          for (const [key, msgs] of Object.entries(res.errors)) {
+            if (key in form) next[key as FormFields] = msgs[0];
+          }
+          setFieldErrors(next);
+          if (next.name || next.phone) setStep(1);
+          else if (next.address) setStep(2);
         }
-        setFieldErrors(next);
-        if (next.name || next.phone) setStep(1);
-        else if (next.address) setStep(2);
-        setStatus("idle");
-        return;
-      }
-
-      if (res.success === false) {
         setFormError(res.message ?? "Виникла помилка при відправці. Спробуйте пізніше.");
         setStatus("idle");
         return;

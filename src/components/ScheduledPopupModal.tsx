@@ -68,13 +68,16 @@ export default function ScheduledPopupModal({ modal, onClose, onSubmitted }: Pro
     try {
       const res = await submitScheduledPopupContact(name.trim(), phone, modal.id);
 
-      if (res.success === false && res.errors) {
-        const next: FieldErrors = {};
-        for (const [key, msgs] of Object.entries(res.errors)) {
-          if (key === "name" || key === "phone") next[key] = msgs[0];
+      if (res.success !== true) {
+        if (res.errors) {
+          const next: FieldErrors = {};
+          for (const [key, msgs] of Object.entries(res.errors)) {
+            if (key === "name" || key === "phone") next[key] = msgs[0];
+          }
+          setFieldErrors(next);
         }
-        setFieldErrors(next);
-        setStatus("idle");
+        setStatus("error");
+        setFormError(res.message ?? "Виникла помилка при відправці. Спробуйте пізніше.");
         return;
       }
 

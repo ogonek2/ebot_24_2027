@@ -3,6 +3,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faHeadset, faPhone, faXmark } from "@fortawesome/free-solid-svg-icons";
 import RaccoonLogo from "./RaccoonLogo";
 import { submitContact } from "@/lib/api";
+import { logLeadEvent } from "@/lib/leadLogger";
 import {
   formatUaPhoneInput,
   isUaPhoneComplete,
@@ -54,6 +55,12 @@ export default function FeedbackModal({ onClose }: Props) {
 
     if (Object.keys(errors).length) {
       setFieldErrors(errors);
+      logLeadEvent(
+        "feedback_modal",
+        "validation",
+        { name: name.trim(), phone, message: message.trim() || null },
+        { error: Object.values(errors).join("; ") },
+      );
       return;
     }
 
@@ -67,15 +74,18 @@ export default function FeedbackModal({ onClose }: Props) {
         errors?: Record<string, string[]>;
       };
 
-      if (res.success === false && res.errors) {
-        const next: FieldErrors = {};
-        for (const [key, msgs] of Object.entries(res.errors)) {
-          if (key === "name" || key === "phone" || key === "message") {
-            next[key] = msgs[0];
+      if (res.success !== true) {
+        if (res.errors) {
+          const next: FieldErrors = {};
+          for (const [key, msgs] of Object.entries(res.errors)) {
+            if (key === "name" || key === "phone" || key === "message") {
+              next[key] = msgs[0];
+            }
           }
+          setFieldErrors(next);
         }
-        setFieldErrors(next);
-        setStatus("idle");
+        setStatus("error");
+        setFormError(res.message ?? "Виникла помилка при відправці. Спробуйте пізніше.");
         return;
       }
 

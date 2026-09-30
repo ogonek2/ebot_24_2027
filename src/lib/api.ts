@@ -1,6 +1,7 @@
 import { cachedFetch, BLOG_CACHE_TTL_MS } from "./cache";
 import type { BlogListResponse } from "./blog";
 import type { SpaBranch, SpaLocationCity, SpaServiceDetail } from "@/lib/bootstrap";
+import { logLeadEvent } from "./leadLogger";
 
 const API_BASE = (import.meta.env.VITE_API_URL ?? "").replace(/\/$/, "");
 
@@ -12,10 +13,13 @@ export function apiUrl(path: string): string {
 /** Plain CSRF from /api/csrf-token (works cross-subdomain; cookie XSRF often does not). */
 let csrfTokenMemory: string | null = null;
 let csrfReady: Promise<string> | null = null;
+let csrfFetchedAt = 0;
+const CSRF_MAX_AGE_MS = 25 * 60 * 1000; // refresh before typical 2h session issues / idle tabs
 
 export function resetCsrf(): void {
   csrfTokenMemory = null;
   csrfReady = null;
+  csrfFetchedAt = 0;
 }
 
 function xsrfCookieToken(): string {
@@ -28,10 +32,11 @@ function xsrfCookieToken(): string {
  * Safe to call on app boot and before any mutating request.
  */
 export function ensureCsrf(force = false): Promise<string> {
-  if (!force && csrfTokenMemory) {
+  const stale = csrfFetchedAt > 0 && Date.now() - csrfFetchedAt > CSRF_MAX_AGE_MS;
+  if (!force && !stale && csrfTokenMemory) {
     return Promise.resolve(csrfTokenMemory);
   }
-  if (!force && csrfReady) {
+  if (!force && !stale && csrfReady) {
     return csrfReady;
   }
 
@@ -59,6 +64,7 @@ export function ensureCsrf(force = false): Promise<string> {
     }
 
     csrfTokenMemory = token;
+    csrfFetchedAt = Date.now();
     return token;
   })().catch((err) => {
     resetCsrf();
@@ -76,9 +82,38 @@ function applyCsrfHeaders(headers: Headers, token: string) {
   }
 }
 
+type ApiErrorBody = {
+  success?: boolean;
+  message?: string;
+  errors?: Record<string, string[]>;
+};
+
+/** Public lead endpoints — no session/CSRF cookies required (and must not request them). */
+const CSRF_EXEMPT_PREFIXES = [
+  "/api/contact",
+  "/api/order/consultation",
+  "/api/courier/request",
+  "/api/b2b/proposal",
+  "/api/lead-log",
+];
+
+function pathNeedsCsrf(path: string, method: string): boolean {
+  if (method === "GET" || method === "HEAD") return false;
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return !CSRF_EXEMPT_PREFIXES.some((p) => normalized === p || normalized.startsWith(`${p}?`));
+}
+
+async function readJsonSafe(res: Response): Promise<ApiErrorBody> {
+  try {
+    return (await res.json()) as ApiErrorBody;
+  } catch {
+    return {};
+  }
+}
+
 async function apiFetch(path: string, init: RequestInit = {}, retried = false): Promise<Response> {
   const method = (init.method ?? "GET").toUpperCase();
-  const needsCsrf = method !== "GET" && method !== "HEAD";
+  const needsCsrf = pathNeedsCsrf(path, method);
 
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -88,14 +123,16 @@ async function apiFetch(path: string, init: RequestInit = {}, retried = false): 
   }
 
   if (needsCsrf) {
-    const token = await ensureCsrf();
+    const token = await ensureCsrf(retried);
     applyCsrfHeaders(headers, token);
   }
 
   const res = await fetch(apiUrl(path), {
     ...init,
     headers,
-    credentials: "include",
+    // Lead forms: omit cookies to avoid cross-site SameSite console noise.
+    // Cart/order: include session cookies.
+    credentials: needsCsrf ? "include" : "omit",
   });
 
   if (res.status === 419 && needsCsrf && !retried) {
@@ -105,16 +142,24 @@ async function apiFetch(path: string, init: RequestInit = {}, retried = false): 
   }
 
   if (!res.ok) {
-    throw new Error(`API ${path} failed: ${res.status}`);
+    const body = await readJsonSafe(res.clone());
+    throw new Error(body.message ?? `API ${path} failed: ${res.status}`);
   }
 
   return res;
 }
 
-/** Like apiFetch but returns JSON even on 4xx (forms validation). Retries CSRF once on 419. */
-async function apiJson<T>(path: string, init: RequestInit = {}, retried = false): Promise<T> {
+/**
+ * Like apiFetch but returns JSON for forms.
+ * Never treats HTTP errors / missing success as OK (was causing false "sent" on 419).
+ */
+async function apiJson<T extends ApiErrorBody>(
+  path: string,
+  init: RequestInit = {},
+  retried = false,
+): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
-  const needsCsrf = method !== "GET" && method !== "HEAD";
+  const needsCsrf = pathNeedsCsrf(path, method);
 
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -124,14 +169,14 @@ async function apiJson<T>(path: string, init: RequestInit = {}, retried = false)
   }
 
   if (needsCsrf) {
-    const token = await ensureCsrf();
+    const token = await ensureCsrf(retried);
     applyCsrfHeaders(headers, token);
   }
 
   const res = await fetch(apiUrl(path), {
     ...init,
     headers,
-    credentials: "include",
+    credentials: needsCsrf ? "include" : "omit",
   });
 
   if (res.status === 419 && needsCsrf && !retried) {
@@ -140,7 +185,25 @@ async function apiJson<T>(path: string, init: RequestInit = {}, retried = false)
     return apiJson<T>(path, init, true);
   }
 
-  return res.json() as Promise<T>;
+  const data = (await readJsonSafe(res)) as T;
+
+  if (!res.ok) {
+    return {
+      success: false,
+      message: data.message ?? (res.status === 419 ? "Сесію оновіть і спробуйте ще раз" : `Помилка ${res.status}`),
+      errors: data.errors,
+      ...data,
+    } as T;
+  }
+
+  if (data.success === false) {
+    return data;
+  }
+  if (method !== "GET" && method !== "HEAD" && data.success !== true && data.success !== undefined) {
+    return { ...data, success: false, message: data.message ?? "Помилка відправки" };
+  }
+
+  return data;
 }
 
 
@@ -266,6 +329,7 @@ export async function addToCart(
   cleaningType: "individual" | "stream",
   quantity = 1,
 ) {
+  await ensureCsrf(true);
   const res = await apiFetch("/api/cart/add", {
     method: "POST",
     body: JSON.stringify({
@@ -282,6 +346,7 @@ export async function addToCart(
 }
 
 export async function addRepairToCart(repairItemId: number, quantity = 1) {
+  await ensureCsrf(true);
   const res = await apiFetch("/api/cart/add", {
     method: "POST",
     body: JSON.stringify({
@@ -298,21 +363,58 @@ export async function addRepairToCart(repairItemId: number, quantity = 1) {
 }
 
 export async function submitConsultation(name: string, phone: string, message?: string) {
-  return apiJson("/api/order/consultation", {
-    method: "POST",
-    body: JSON.stringify({ name, phone, message }),
-  });
+  const payload = { name, phone, message: message ?? null, source: "consultation" };
+  logLeadEvent("consultation", "attempt", payload);
+  try {
+    const res = await apiJson<{ success?: boolean; message?: string }>("/api/order/consultation", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success === true) {
+      logLeadEvent("consultation", "success", payload);
+    } else {
+      logLeadEvent("consultation", "error", payload, { error: res.message ?? "success!==true" });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("consultation", "error", payload, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export async function submitContact(name: string, phone: string, message?: string) {
-  return apiJson<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>("/api/contact", {
-    method: "POST",
-    body: JSON.stringify({ name, phone, message: message ?? null }),
-  });
+  const payload = {
+    name,
+    phone,
+    message: message ?? null,
+    source: "consultation",
+  };
+  logLeadEvent("contact", "attempt", payload);
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>("/api/contact", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success === true) {
+      logLeadEvent("contact", "success", payload);
+    } else {
+      logLeadEvent("contact", "error", payload, {
+        error: res.message ?? (JSON.stringify(res.errors ?? {}) || "success!==true"),
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("contact", "error", payload, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export type CourierOrderPayload = {
@@ -326,22 +428,39 @@ export type CourierOrderPayload = {
 };
 
 export async function submitCourierOrder(payload: CourierOrderPayload) {
-  return apiJson<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>("/api/courier/request", {
-    method: "POST",
-    body: JSON.stringify({
-      name: payload.name,
-      phone: payload.phone,
-      type: payload.type,
-      address: payload.address?.trim() || null,
-      date: payload.date?.trim() || null,
-      time: payload.time?.trim() || null,
-      comment: payload.comment?.trim() || null,
-    }),
-  });
+  const body = {
+    name: payload.name,
+    phone: payload.phone,
+    type: payload.type,
+    address: payload.address?.trim() || null,
+    date: payload.date?.trim() || null,
+    time: payload.time?.trim() || null,
+    comment: payload.comment?.trim() || null,
+  };
+  logLeadEvent("courier", "attempt", body);
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>("/api/courier/request", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    if (res.success === true) {
+      logLeadEvent("courier", "success", body);
+    } else {
+      logLeadEvent("courier", "error", body, {
+        error: res.message ?? (JSON.stringify(res.errors ?? {}) || "success!==true"),
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("courier", "error", body, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export type B2bProposalPayload = {
@@ -354,37 +473,71 @@ export type B2bProposalPayload = {
 };
 
 export async function submitB2bProposal(payload: B2bProposalPayload) {
-  return apiJson<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>("/api/b2b/proposal", {
-    method: "POST",
-    body: JSON.stringify({
-      company: payload.company,
-      name: payload.name,
-      phone: payload.phone,
-      email: payload.email,
-      volume: payload.volume,
-      comment: payload.comment?.trim() || null,
-    }),
-  });
+  const body = {
+    company: payload.company,
+    name: payload.name,
+    phone: payload.phone,
+    email: payload.email,
+    volume: payload.volume,
+    comment: payload.comment?.trim() || null,
+  };
+  logLeadEvent("b2b", "attempt", body);
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>("/api/b2b/proposal", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+    if (res.success === true) {
+      logLeadEvent("b2b", "success", body);
+    } else {
+      logLeadEvent("b2b", "error", body, {
+        error: res.message ?? (JSON.stringify(res.errors ?? {}) || "success!==true"),
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("b2b", "error", body, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export async function submitScheduledPopupContact(name: string, phone: string, popupModalId: number) {
-  return apiJson<{
-    success?: boolean;
-    message?: string;
-    errors?: Record<string, string[]>;
-  }>("/api/contact", {
-    method: "POST",
-    body: JSON.stringify({
-      name,
-      phone,
-      source: "scheduled_popup_modal",
-      popup_modal_id: popupModalId,
-    }),
-  });
+  const payload = {
+    name,
+    phone,
+    source: "scheduled_popup_modal",
+    popup_modal_id: popupModalId,
+  };
+  logLeadEvent("scheduled_popup", "attempt", payload);
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      message?: string;
+      errors?: Record<string, string[]>;
+    }>("/api/contact", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success === true) {
+      logLeadEvent("scheduled_popup", "success", payload);
+    } else {
+      logLeadEvent("scheduled_popup", "error", payload, {
+        error: res.message ?? (JSON.stringify(res.errors ?? {}) || "success!==true"),
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("scheduled_popup", "error", payload, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export async function fetchScheduledPopups() {
@@ -411,11 +564,13 @@ export async function getCart() {
 }
 
 export async function removeFromCart(key: string) {
+  await ensureCsrf(true);
   const res = await apiFetch(`/api/cart/${key}`, { method: "DELETE" });
   return res.json() as Promise<{ items: CartItem[]; total: number; count: number }>;
 }
 
 export async function updateCart(key: string, quantity: number) {
+  await ensureCsrf(true);
   const res = await apiFetch(`/api/cart/${key}`, {
     method: "PUT",
     body: JSON.stringify({ quantity }),
@@ -424,6 +579,7 @@ export async function updateCart(key: string, quantity: number) {
 }
 
 export async function clearCart() {
+  await ensureCsrf(true);
   const res = await apiFetch("/api/cart/clear", { method: "POST" });
   return res.json() as Promise<{ success: boolean; message?: string }>;
 }
@@ -440,11 +596,26 @@ export function fetchPickupLocationsCached() {
 }
 
 export async function submitOrder(data: Record<string, unknown>) {
-  const res = await apiFetch("/api/order/submit", {
-    method: "POST",
-    body: JSON.stringify(data),
-  });
-  return res.json() as Promise<{ success: boolean; order_id?: string; message?: string }>;
+  logLeadEvent("checkout", "attempt", data);
+  try {
+    await ensureCsrf(true);
+    const res = await apiFetch("/api/order/submit", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    const json = (await res.json()) as { success: boolean; order_id?: string; message?: string };
+    if (json.success) {
+      logLeadEvent("checkout", "success", { ...data, order_id: json.order_id ?? null });
+    } else {
+      logLeadEvent("checkout", "error", data, { error: json.message ?? "success!==true" });
+    }
+    return json;
+  } catch (err) {
+    logLeadEvent("checkout", "error", data, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export type LastOrderItem = {

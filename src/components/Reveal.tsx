@@ -6,26 +6,41 @@ interface RevealProps {
   delay?: number;
 }
 
+/**
+ * Light scroll polish only. Content stays visible from the first paint —
+ * never gate the page behind opacity:0 / IntersectionObserver (that caused
+ * "blocks appear only after scrolling to the end").
+ */
 export default function Reveal({ children, className = "", delay = 0 }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const [enhanced, setEnhanced] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setEnhanced(true);
+      return;
+    }
+
     const io = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setVisible(true);
+          setEnhanced(true);
           io.disconnect();
         }
       },
-      { threshold: 0.12, rootMargin: "0px 0px -40px 0px" },
+      { threshold: 0.01, rootMargin: "20% 0px" },
     );
 
     io.observe(el);
-    return () => io.disconnect();
+    // Failsafe: never leave content without the polish class forever
+    const t = window.setTimeout(() => setEnhanced(true), 800);
+    return () => {
+      io.disconnect();
+      window.clearTimeout(t);
+    };
   }, []);
 
   return (
@@ -33,11 +48,12 @@ export default function Reveal({ children, className = "", delay = 0 }: RevealPr
       ref={ref}
       className={className}
       style={{
-        opacity: visible ? 1 : 0,
-        /* Після появи — transform: none, інакше sticky у нащадків не працює */
-        transform: visible ? "none" : "translateY(28px) scale(0.98)",
-        transition: `opacity 0.75s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms, transform 0.75s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`,
-        willChange: visible ? "auto" : "opacity, transform",
+        opacity: 1,
+        transform: enhanced ? "none" : "translateY(12px)",
+        transition: enhanced
+          ? `transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) ${delay}ms`
+          : undefined,
+        willChange: enhanced ? "auto" : "transform",
       }}
     >
       {children}

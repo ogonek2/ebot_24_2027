@@ -6,16 +6,23 @@ use Closure;
 use Illuminate\Http\Request;
 
 /**
- * Safety net: strip any Set-Cookie on /api/lead-log if a session middleware
- * somehow still ran. Primary fix is registering lead-log without Sanctum.
+ * Safety net: strip Set-Cookie on cookie-free public endpoints if session
+ * middleware somehow still ran (cross-site SameSite console noise).
  */
 class StripSessionCookies
 {
+    /** @var list<string> */
+    private const PATHS = [
+        'api/lead-log',
+        'api/order/submit',
+        'api/order/last',
+    ];
+
     public function handle(Request $request, Closure $next)
     {
         $response = $next($request);
 
-        if (!$request->is('api/lead-log')) {
+        if (!$request->is(...self::PATHS)) {
             return $response;
         }
 

@@ -39,14 +39,16 @@ class RouteServiceProvider extends ServiceProvider
 
         $this->routes(function () {
             /*
-             | Stateless beacon — no Sanctum / session / CSRF cookies.
-             | SPA calls this cross-origin with credentials:omit; any Set-Cookie
-             | with SameSite=Lax would only spam the browser console.
+             | Stateless public API — no Sanctum / session / CSRF cookies.
+             | SPA calls these cross-origin with credentials:omit.
+             | Checkout cart lives in browser storage; submitOrder reprices from DB.
              */
             Route::prefix('api')
                 ->middleware(['throttle:api', \Illuminate\Routing\Middleware\SubstituteBindings::class])
                 ->group(function () {
                     Route::post('/lead-log', [\App\Http\Controllers\LeadLogController::class, 'store']);
+                    Route::post('/order/submit', [\App\Http\Controllers\CartController::class, 'submitOrder']);
+                    Route::get('/order/last', [\App\Http\Controllers\CartController::class, 'getLastOrder']);
                 });
 
             Route::prefix('api')

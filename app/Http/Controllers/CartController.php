@@ -243,36 +243,57 @@ class CartController extends Controller
     }
 
     /**
-     * Отправить заказ
+     * Отправить заказ.
+     * Корзина приходит с клиента (browser storage) — цены пересчитываем из БД.
+     * Не зависит от session cookies (кросс-домен SPA↔API).
      */
     public function submitOrder(Request $request)
     {
-        // Валидация с правильной обработкой условных полей
         $rules = [
             'name' => 'required|string|max:255',
-            'phone' => 'required|string|max:20',
+            'phone' => 'required|string|max:40',
             'delivery_method' => 'required|in:self,courier',
+            'items' => 'required|array|min:1|max:100',
+            'items.*.service_id' => 'nullable|integer|exists:services,id',
+            'items.*.repair_item_id' => 'nullable|integer|exists:repair_items,id',
+            'items.*.cleaning_type' => 'required|in:individual,stream,repair',
+            'items.*.quantity' => 'required|integer|min:1|max:99',
         ];
-        
-        // Добавляем условные правила валидации
+
         if ($request->delivery_method === 'self') {
             $rules['pickup_location_id'] = 'required|exists:locations,id';
         } elseif ($request->delivery_method === 'courier') {
             $rules['delivery_address'] = 'required|string|max:500';
         }
-        
+
         $validated = $request->validate($rules);
 
-        $cart = session('cart', []);
+        foreach ($validated['items'] as $idx => $row) {
+            $hasService = !empty($row['service_id']);
+            $hasRepair = !empty($row['repair_item_id']);
+            if ($hasService === $hasRepair) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Некоректний склад кошика (позиція #' . ($idx + 1) . ')',
+                ], 422);
+            }
+            if (!empty($row['cleaning_type']) && $row['cleaning_type'] === 'repair' && !$hasRepair) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Некоректний склад кошика (ремонт без id)',
+                ], 422);
+            }
+        }
+
+        $cart = $this->normalizeClientCartItems($validated['items']);
 
         if (empty($cart)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Корзина порожня'
+                'message' => 'Корзина порожня або містить невалідні позиції',
             ], 400);
         }
 
-        // Получаем детали корзины
         $built = $this->buildCartPayload($cart);
         $cartItems = array_map(static function (array $row) {
             return [
@@ -289,23 +310,20 @@ class CartController extends Controller
         }, $built['items']);
         $total = $built['total'];
 
-        if ($total <= 0 && empty($cartItems)) {
+        if (empty($cartItems)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Корзина порожня'
+                'message' => 'Корзина порожня',
             ], 400);
         }
 
-        // Получаем информацию о приемном пункте если есть
         $pickupLocation = null;
         if ($request->delivery_method === 'self' && isset($validated['pickup_location_id'])) {
             $pickupLocation = locations::with('cityRelation')->find($validated['pickup_location_id']);
         }
 
-        // Генерируем уникальный ID заказа
         $orderId = 'ENOT-' . date('Ymd') . '-' . strtoupper(uniqid());
 
-        // Сохраняем заказ в базу данных
         $order = Order::create([
             'order_id' => $orderId,
             'name' => $validated['name'],
@@ -318,8 +336,7 @@ class CartController extends Controller
             'status' => 'new',
         ]);
 
-        // Сохраняем заказ в сессию для отображения на странице благодарности
-        $sessionOrder = [
+        $publicOrder = [
             'id' => $orderId,
             'name' => $validated['name'],
             'phone' => $validated['phone'],
@@ -335,27 +352,77 @@ class CartController extends Controller
             'created_at' => now()->format('d.m.Y H:i'),
         ];
 
-        session(['last_order' => $sessionOrder]);
-
-        // Отправляем уведомление в Telegram
         try {
             $this->sendOrderTelegramNotification($order, $pickupLocation);
         } catch (\Exception $e) {
-            // Логируем ошибку, но не прерываем выполнение
             \Log::error('Failed to send Telegram notification for order: ' . $orderId, [
                 'error' => $e->getMessage(),
-                'order_id' => $orderId
+                'order_id' => $orderId,
             ]);
         }
 
-        // Очищаем корзину после оформления заказа
-        session(['cart' => []]);
-
+        // Order is persisted in DB before Telegram; response.order is the SPA source of truth
+        // (no session cookies — cross-site SPA↔API).
         return response()->json([
             'success' => true,
             'message' => 'Замовлення успішно оформлено',
-            'order_id' => $orderId
+            'order_id' => $orderId,
+            'order' => $publicOrder,
         ]);
+    }
+
+    /**
+     * Normalize SPA cart lines into internal cart map. Prices are NEVER taken from client.
+     *
+     * @param  list<array<string, mixed>>  $items
+     * @return array<string, array<string, mixed>>
+     */
+    private function normalizeClientCartItems(array $items): array
+    {
+        $cart = [];
+
+        foreach ($items as $row) {
+            $qty = max(1, min(99, (int) ($row['quantity'] ?? 1)));
+            $cleaning = (string) ($row['cleaning_type'] ?? 'stream');
+            $repairId = isset($row['repair_item_id']) ? (int) $row['repair_item_id'] : 0;
+            $serviceId = isset($row['service_id']) ? (int) $row['service_id'] : 0;
+
+            if ($repairId > 0 || $cleaning === 'repair') {
+                if ($repairId <= 0) {
+                    continue;
+                }
+                $key = 'repair_' . $repairId;
+                if (isset($cart[$key])) {
+                    $cart[$key]['quantity'] += $qty;
+                } else {
+                    $cart[$key] = [
+                        'type' => 'repair',
+                        'repair_item_id' => $repairId,
+                        'quantity' => $qty,
+                        'cleaning_type' => 'repair',
+                    ];
+                }
+                continue;
+            }
+
+            if ($serviceId <= 0 || !in_array($cleaning, ['individual', 'stream'], true)) {
+                continue;
+            }
+
+            $key = $this->generateCartKey($serviceId, $cleaning);
+            if (isset($cart[$key])) {
+                $cart[$key]['quantity'] += $qty;
+            } else {
+                $cart[$key] = [
+                    'type' => 'service',
+                    'service_id' => $serviceId,
+                    'quantity' => $qty,
+                    'cleaning_type' => $cleaning,
+                ];
+            }
+        }
+
+        return $cart;
     }
 
     /**
@@ -414,22 +481,42 @@ class CartController extends Controller
     }
 
     /**
-     * Отримати останнє замовлення з сесії (для SPA)
+     * Отримати замовлення за order_id з БД (без session cookies).
      */
     public function getLastOrder(Request $request)
     {
-        $order = session('last_order');
+        $orderId = $request->query('order_id');
+        if (!$orderId || !is_string($orderId)) {
+            return response()->json(['order' => null], 404);
+        }
 
+        $order = Order::where('order_id', $orderId)->first();
         if (!$order) {
             return response()->json(['order' => null], 404);
         }
 
-        $orderId = $request->query('order_id');
-        if ($orderId && ($order['id'] ?? null) !== $orderId) {
-            return response()->json(['order' => null], 404);
+        $pickupLocation = null;
+        if ($order->delivery_method === 'self' && $order->pickup_location_id) {
+            $pickupLocation = locations::with('cityRelation')->find($order->pickup_location_id);
         }
 
-        return response()->json(['order' => $order]);
+        return response()->json([
+            'order' => [
+                'id' => $order->order_id,
+                'name' => $order->name,
+                'phone' => $order->phone,
+                'delivery_method' => $order->delivery_method,
+                'pickup_location' => $pickupLocation ? [
+                    'street' => $pickupLocation->street,
+                    'city' => $pickupLocation->cityRelation->name ?? 'Невідомо',
+                    'working_hours' => $pickupLocation->workinghourse ?? '',
+                ] : null,
+                'delivery_address' => $order->delivery_address,
+                'items' => $order->items ?? [],
+                'total' => (float) $order->total,
+                'created_at' => optional($order->created_at)->format('d.m.Y H:i') ?? '',
+            ],
+        ]);
     }
 
     /**

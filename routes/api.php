@@ -43,8 +43,8 @@ Route::get('/promotions-banner', [PromotionController::class, 'getPromotionsForB
 Route::post('/contact', [App\Http\Controllers\FeedbackController::class, 'submit']);
 Route::post('/b2b/proposal', [App\Http\Controllers\FeedbackController::class, 'submitB2bProposal']);
 Route::post('/courier/request', [App\Http\Controllers\FeedbackController::class, 'submitCourierOrder']);
-// /api/lead-log is registered in RouteServiceProvider WITHOUT Sanctum session
-// (avoids cross-site SameSite=Lax Set-Cookie noise in the browser console).
+// /api/lead-log, /api/order/submit, /api/order/last — RouteServiceProvider
+// WITHOUT Sanctum session (browser cart + DB reprice; no SameSite cookie noise).
 
 /*
 | SPA CSRF: plain token for X-CSRF-TOKEN (after GET /sanctum/csrf-cookie).
@@ -56,10 +56,8 @@ Route::get('/csrf-token', function () {
 
 /*
 |--------------------------------------------------------------------------
-| Session API (cart, orders) — cookies + CSRF via Sanctum stateful
+| Legacy session cart (unused by SPA — cart is localStorage now)
 |--------------------------------------------------------------------------
-| Do NOT wrap in middleware('web'): api routes already use
-| EnsureFrontendRequestsAreStateful. Double web+api CSRF/session breaks SPA.
 */
 Route::get('/cart', [CartController::class, 'getCart']);
 Route::post('/cart/add', [CartController::class, 'addToCart']);
@@ -67,8 +65,6 @@ Route::put('/cart/{key}', [CartController::class, 'updateCart']);
 Route::delete('/cart/{key}', [CartController::class, 'removeFromCart']);
 Route::post('/cart/clear', [CartController::class, 'clearCart']);
 Route::get('/pickup-locations', [CartController::class, 'getPickupLocations']);
-Route::post('/order/submit', [CartController::class, 'submitOrder']);
-Route::get('/order/last', [CartController::class, 'getLastOrder']);
 Route::post('/order/consultation', [CartController::class, 'submitConsultation']);
 
 Route::middleware('auth:sanctum')->get('/user', function (\Illuminate\Http\Request $request) {

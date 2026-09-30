@@ -38,6 +38,17 @@ class RouteServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
 
         $this->routes(function () {
+            /*
+             | Stateless beacon — no Sanctum / session / CSRF cookies.
+             | SPA calls this cross-origin with credentials:omit; any Set-Cookie
+             | with SameSite=Lax would only spam the browser console.
+             */
+            Route::prefix('api')
+                ->middleware(['throttle:api', \Illuminate\Routing\Middleware\SubstituteBindings::class])
+                ->group(function () {
+                    Route::post('/lead-log', [\App\Http\Controllers\LeadLogController::class, 'store']);
+                });
+
             Route::prefix('api')
                 ->middleware('api')
                 ->namespace($this->namespace)

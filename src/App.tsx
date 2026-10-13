@@ -27,6 +27,7 @@ import PromotionDetailPage from "./pages/PromotionDetailPage";
 import BlogPage from "./pages/BlogPage";
 import BlogPostPage from "./pages/BlogPostPage";
 import LegalPage from "./pages/LegalPage";
+import ForClientsPage from "./pages/ForClientsPage";
 import { BootstrapProvider, useBootstrapState } from "./context/BootstrapContext";
 import { CartProvider } from "./context/CartContext";
 import { FeedbackProvider } from "./context/FeedbackContext";
@@ -79,6 +80,7 @@ function AppShell() {
             <Route path={ROUTES.contacts} element={<ContactsPage />} />
             <Route path={ROUTES.blog} element={<BlogPage />} />
             <Route path="/blog/:slug" element={<BlogPostPage />} />
+            <Route path={ROUTES.forClients} element={<ForClientsPage />} />
             <Route path={ROUTES.oferta} element={<LegalPage doc="oferta" />} />
             <Route path={ROUTES.privacy} element={<LegalPage doc="privacy" />} />
             <Route path={ROUTES.umovy} element={<LegalPage doc="umovy" />} />

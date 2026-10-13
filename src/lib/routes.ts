@@ -13,6 +13,7 @@ export const ROUTES = {
   oferta: "/oferta",
   privacy: "/privacy-policy",
   umovy: "/umovy",
+  forClients: "/dlya-klientiv",
   orderSuccess: "/order-success",
 } as const;
 

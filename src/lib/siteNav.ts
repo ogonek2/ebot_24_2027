@@ -26,6 +26,7 @@ export const serviceLinks = [
 ] as const;
 
 export const legalLinks = [
+  { label: "Для клієнтів", href: ROUTES.forClients },
   { label: "Політика конфіденційності", href: ROUTES.privacy },
   { label: "Публічна оферта", href: ROUTES.oferta },
   { label: "Умови використання", href: ROUTES.umovy },

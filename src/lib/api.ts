@@ -95,9 +95,9 @@ const CSRF_EXEMPT_PREFIXES = [
   "/api/order/submit",
   "/api/courier/request",
   "/api/b2b/proposal",
+  "/api/consumer-review",
   "/api/lead-log",
 ];
-
 function pathNeedsCsrf(path: string, method: string): boolean {
   if (method === "GET" || method === "HEAD") return false;
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -544,6 +544,51 @@ export async function submitScheduledPopupContact(name: string, phone: string, p
 export async function fetchScheduledPopups() {
   const res = await apiFetch("/api/scheduled-popup-modals");
   return res.json() as Promise<import("@/lib/scheduledPopups").ScheduledPopupResponse>;
+}
+
+export type ConsumerReviewPayload = {
+  name: string;
+  phone: string;
+  email?: string;
+  order_number?: string;
+  type?: "review" | "claim" | "suggestion";
+  message: string;
+};
+
+export async function submitConsumerReview(payload: ConsumerReviewPayload) {
+  logLeadEvent("consumer_review", "attempt", {
+    name: payload.name,
+    phone: payload.phone,
+    type: payload.type ?? "review",
+  });
+  try {
+    const res = await apiJson<{
+      success?: boolean;
+      message?: string;
+      errors?: Record<string, string[]>;
+      id?: number;
+    }>("/api/consumer-review", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    if (res.success === true) {
+      logLeadEvent("consumer_review", "success", {
+        name: payload.name,
+        phone: payload.phone,
+        id: res.id ?? null,
+      });
+    } else {
+      logLeadEvent("consumer_review", "error", payload, {
+        error: res.message ?? "success!==true",
+      });
+    }
+    return res;
+  } catch (err) {
+    logLeadEvent("consumer_review", "error", payload, {
+      error: err instanceof Error ? err.message : "network",
+    });
+    throw err;
+  }
 }
 
 export type CartItem = {

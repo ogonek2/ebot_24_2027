@@ -323,7 +323,7 @@ export default function ForClientsPage() {
                           value={form.phone}
                           onChange={(e) => setForm({ ...form, phone: formatUaPhoneInput(e.target.value) })}
                           className="cart-form-input"
-                          placeholder={phoneDisplayPlaceholder}
+                          placeholder={phoneDisplayPlaceholder()}
                         />
                       </div>
                     </div>

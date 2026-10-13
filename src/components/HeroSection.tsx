@@ -74,7 +74,7 @@ export default function HeroSection() {
               </ul>
             </div>
           <p className="text-[12px] sm:text-[13px] font-semibold text-[#1A1A2E]/40 tracking-wide">
-            Безкоштовна доставка по Києву · натисніть знак на орбіті — підкажемо значення ↓
+            Натисніть знак на орбіті — підкажемо значення ↓
           </p>
           <a href="#prices" className="group inline-flex items-center gap-2 text-[12px] sm:text-[13px] font-bold text-[#f97171] no-underline">
             Прайс

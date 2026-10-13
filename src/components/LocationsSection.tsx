@@ -53,7 +53,7 @@ export default function LocationsSection() {
             </h2>
             <p className="text-[15px] text-[#1A1A2E]/55 mb-6 leading-relaxed">
               {locations.length > 0
-                ? `${locations.length} зручних локацій та безкоштовний кур'єр — речі забирають і повертають до дверей`
+                ? `${locations.length} зручних локацій та доставка кур'єром — речі забирають і повертають до дверей`
                 : "Безкоштовний кур'єр — речі забирають і повертають до дверей"}
             </p>
 

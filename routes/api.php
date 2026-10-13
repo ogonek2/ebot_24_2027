@@ -43,6 +43,7 @@ Route::get('/promotions-banner', [PromotionController::class, 'getPromotionsForB
 Route::post('/contact', [App\Http\Controllers\FeedbackController::class, 'submit']);
 Route::post('/b2b/proposal', [App\Http\Controllers\FeedbackController::class, 'submitB2bProposal']);
 Route::post('/courier/request', [App\Http\Controllers\FeedbackController::class, 'submitCourierOrder']);
+Route::post('/consumer-review', [App\Http\Controllers\ConsumerReviewController::class, 'store']);
 // /api/lead-log, /api/order/submit, /api/order/last — RouteServiceProvider
 // WITHOUT Sanctum session (browser cart + DB reprice; no SameSite cookie noise).
 

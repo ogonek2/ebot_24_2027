@@ -18,6 +18,7 @@ class VerifyCsrfToken extends Middleware
         'api/order/submit',
         'api/courier/request',
         'api/b2b/proposal',
+        'api/consumer-review',
         'api/lead-log',
     ];
 }

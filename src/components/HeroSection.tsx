@@ -66,7 +66,7 @@ export default function HeroSection() {
                   <a className="text-md color-[#1A1A2E]/40" href="https://instagram.com/enot24cleaner" target="_blank" rel="referrer"><i className="fa-brands fa-instagram"></i></a>
                 </li>
                 <li className="inline-block">
-                  <a className="text-md color-[#1A1A2E]/40" href="https://t.me/enot24ServiceBot" target="_blank" rel="referrer"><i className="fa-brands fa-telegram"></i></a>
+                  <a className="text-md color-[#1A1A2E]/40" href="https://t.me/servisenot24" target="_blank" rel="noopener noreferrer"><i className="fa-brands fa-telegram"></i></a>
                 </li>
                 <li className="inline-block">
                   <a className="text-md color-[#1A1A2E]/40" href="https://www.tiktok.com/@enot24_cleanner" target="_blank" rel="referrer"><i className="fa-brands fa-tiktok"></i></a>

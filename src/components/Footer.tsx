@@ -47,7 +47,7 @@ export default function Footer() {
                 <FontAwesomeIcon icon={faInstagram} className="text-[14px]" />
               </a>
               <a
-                href="https://t.me/enot24ServiceBot"
+                href="https://t.me/servisenot24"
                 target="_blank"
                 rel="noopener noreferrer"
                 className={socialClass}

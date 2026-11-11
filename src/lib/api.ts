@@ -165,7 +165,8 @@ async function apiJson<T extends ApiErrorBody>(
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   headers.set("X-Requested-With", "XMLHttpRequest");
-  if (!headers.has("Content-Type") && init.body) {
+  const isFormData = typeof FormData !== "undefined" && init.body instanceof FormData;
+  if (!isFormData && !headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -553,6 +554,7 @@ export type ConsumerReviewPayload = {
   order_number?: string;
   type?: "review" | "claim" | "suggestion";
   message: string;
+  photo?: File | null;
 };
 
 export async function submitConsumerReview(payload: ConsumerReviewPayload) {
@@ -560,8 +562,18 @@ export async function submitConsumerReview(payload: ConsumerReviewPayload) {
     name: payload.name,
     phone: payload.phone,
     type: payload.type ?? "review",
+    has_photo: Boolean(payload.photo),
   });
   try {
+    const body = new FormData();
+    body.append("name", payload.name);
+    body.append("phone", payload.phone);
+    body.append("message", payload.message);
+    body.append("type", payload.type ?? "review");
+    if (payload.email) body.append("email", payload.email);
+    if (payload.order_number) body.append("order_number", payload.order_number);
+    if (payload.photo) body.append("photo", payload.photo);
+
     const res = await apiJson<{
       success?: boolean;
       message?: string;
@@ -569,7 +581,7 @@ export async function submitConsumerReview(payload: ConsumerReviewPayload) {
       id?: number;
     }>("/api/consumer-review", {
       method: "POST",
-      body: JSON.stringify(payload),
+      body,
     });
     if (res.success === true) {
       logLeadEvent("consumer_review", "success", {
@@ -578,19 +590,24 @@ export async function submitConsumerReview(payload: ConsumerReviewPayload) {
         id: res.id ?? null,
       });
     } else {
-      logLeadEvent("consumer_review", "error", payload, {
+      logLeadEvent("consumer_review", "error", {
+        name: payload.name,
+        phone: payload.phone,
+      }, {
         error: res.message ?? "success!==true",
       });
     }
     return res;
   } catch (err) {
-    logLeadEvent("consumer_review", "error", payload, {
+    logLeadEvent("consumer_review", "error", {
+      name: payload.name,
+      phone: payload.phone,
+    }, {
       error: err instanceof Error ? err.message : "network",
     });
     throw err;
   }
 }
-
 export type CartItem = {
   key: string;
   service_id: number | null;

@@ -20,8 +20,6 @@ import {
 
   faEnvelope,
 
-  faHeadset,
-
   faLocationDot,
 
   faPhone,
@@ -560,7 +558,7 @@ export default function QuickActionsPanel({ onClose, quickActions }: Props) {
 
                 <a
 
-                  href="https://t.me/enot24ServiceBot"
+                  href="https://t.me/servisenot24"
 
                   target="_blank"
 
@@ -574,35 +572,9 @@ export default function QuickActionsPanel({ onClose, quickActions }: Props) {
 
                   <div className="min-w-0 flex-1">
 
-                    <div className="font-bold text-[12px] text-[#1A1A2E]">@enot24ServiceBot</div>
+                    <div className="font-bold text-[12px] text-[#1A1A2E]">Telegram</div>
 
-                    <div className="text-[10px] text-[#1A1A2E]/50">Основний бот</div>
-
-                  </div>
-
-                  <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="text-[10px] text-[#1A1A2E]/30" />
-
-                </a>
-
-                <a
-
-                  href="https://t.me/servisenot24"
-
-                  target="_blank"
-
-                  rel="noopener noreferrer"
-
-                  className="quick-actions-bot-card"
-
-                >
-
-                  <FontAwesomeIcon icon={faHeadset} className="quick-actions-bot-card__support" />
-
-                  <div className="min-w-0 flex-1">
-
-                    <div className="font-bold text-[12px] text-[#1A1A2E]">Підтримка</div>
-
-                    <div className="text-[10px] text-[#1A1A2E]/50">Допомога та консультації</div>
+                    <div className="text-[10px] text-[#1A1A2E]/50">Написати нам</div>
 
                   </div>
 

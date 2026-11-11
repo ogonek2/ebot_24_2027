@@ -6,7 +6,7 @@ import { openFeedbackModal } from "@/context/FeedbackContext";
 const contacts = [
   { param: 'brands', icon: "instagram" as const, title: "Instagram", value: "@enot24cleaner", href: "https://instagram.com/enot24cleaner", external: true},
   { param: 'brands', icon: "tiktok" as const, title: "TikTok", value: "@enot24_cleanner", href: "https://www.tiktok.com/@enot24_cleanner", external: true},
-  { param: 'brands', icon: "telegram" as const, title: "Telegram", value: "@enot24ServiceBot", href: "https://t.me/enot24ServiceBot", external: true},
+  { param: 'brands', icon: "telegram" as const, title: "Telegram", value: "Telegram", href: "https://t.me/servisenot24", external: true},
   { param: 'solid', icon: "phone" as const, title: "Телефон", value: "+38 (067) 887-22-33", href: "tel:+380678872233" },
   { param: 'solid', icon: "phone" as const, title: "Телефон", value: "+38 (044) 337-22-33", href: "tel:+380443372233" },
   { param: 'solid', icon: "envelope" as const, title: "Email", value: "office.enot24@gmail.com", href: "mailto:office.enot24@gmail.com" }

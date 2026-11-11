@@ -27,6 +27,8 @@ export default function ForClientsPage() {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [form, setForm] = useState({
     name: "",
     phone: "+380 (",
@@ -35,6 +37,26 @@ export default function ForClientsPage() {
     type: "review" as ReviewType,
     message: "",
   });
+
+  const handlePhotoChange = (file: File | null) => {
+    if (photoPreview) URL.revokeObjectURL(photoPreview);
+    if (!file) {
+      setPhoto(null);
+      setPhotoPreview(null);
+      return;
+    }
+    if (!file.type.startsWith("image/")) {
+      setError("Можна прикріпити лише зображення");
+      return;
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setError("Розмір фото не більше 8 МБ");
+      return;
+    }
+    setError("");
+    setPhoto(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +84,7 @@ export default function ForClientsPage() {
         order_number: form.order_number.trim() || undefined,
         type: form.type,
         message: form.message.trim(),
+        photo,
       });
       if (res.success !== true) {
         setError(res.message ?? "Помилка відправки. Спробуйте ще раз.");
@@ -387,6 +410,37 @@ export default function ForClientsPage() {
                       />
                     </div>
 
+                    <div>
+                      <label htmlFor="cr-photo" className="cart-form-label">
+                        Прикріпити фото
+                      </label>
+                      <div className="clients-page__photo">
+                        <input
+                          id="cr-photo"
+                          type="file"
+                          accept="image/jpeg,image/png,image/webp,image/heic"
+                          className="clients-page__photo-input"
+                          onChange={(e) => handlePhotoChange(e.target.files?.[0] ?? null)}
+                        />
+                        {photoPreview ? (
+                          <div className="clients-page__photo-preview">
+                            <img src={photoPreview} alt="Попередній перегляд" />
+                            <button
+                              type="button"
+                              className="clients-page__photo-remove"
+                              onClick={() => handlePhotoChange(null)}
+                            >
+                              Прибрати
+                            </button>
+                          </div>
+                        ) : (
+                          <label htmlFor="cr-photo" className="clients-page__photo-pick">
+                            Обрати зображення (JPG, PNG, до 8 МБ)
+                          </label>
+                        )}
+                      </div>
+                    </div>
+
                     {error && <p className="cart-form-error">{error}</p>}
 
                     <button type="submit" disabled={loading} className="btn-primary w-full sm:w-auto px-8 py-3.5">
@@ -524,20 +578,14 @@ export default function ForClientsPage() {
               <p>
                 01001, м. Київ, вул. Бориса Грінченка, 1
                 <br />
-                <a href="mailto:econsumer-info@dpss.gov.ua">econsumer-info@dpss.gov.ua</a>
+                <span className="clients-page__inactive">econsumer-info@dpss.gov.ua</span>
                 <br />
-                <a href="tel:+380442448202">(044) 244-82-02</a> · <a href="tel:+380502300428">(050) 230-04-28</a>
+                <span className="clients-page__inactive">244-82-02</span>
               </p>
-              <div className="clients-page__links">
-                <a href="https://consumer.dpss.gov.ua/e-form/" target="_blank" rel="noopener noreferrer">
-                  Подати електронне звернення
-                </a>
-                <a href="https://dpss.gov.ua/sluzhba/teritorialniorgani" target="_blank" rel="noopener noreferrer">
-                  Територіальні органи
-                </a>
-                <a href="https://dpss.gov.ua/" target="_blank" rel="noopener noreferrer">
-                  Офіційний сайт
-                </a>
+              <div className="clients-page__links clients-page__links--inactive">
+                <span>Подати електронне звернення</span>
+                <span>Територіальні органи</span>
+                <span>Офіційний сайт</span>
               </div>
               <p className="clients-page__note mt-6">
                 Звернення до нас не позбавляє вас права звернутися до уповноважених державних органів або до суду.

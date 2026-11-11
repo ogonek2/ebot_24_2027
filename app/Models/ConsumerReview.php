@@ -13,6 +13,7 @@ class ConsumerReview extends Model
         'order_number',
         'type',
         'message',
+        'photo',
         'status',
         'admin_notes',
     ];

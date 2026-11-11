@@ -66,6 +66,14 @@ class ConsumerReviewResource extends Resource
                             ->required()
                             ->rows(6)
                             ->columnSpanFull(),
+                        Forms\Components\FileUpload::make('photo')
+                            ->label('Фото')
+                            ->image()
+                            ->directory('consumer-reviews')
+                            ->disk('public')
+                            ->visibility('public')
+                            ->disabled()
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('admin_notes')
                             ->label('Нотатки адміністратора')
                             ->rows(3)

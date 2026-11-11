@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ConsumerReview;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 class ConsumerReviewController extends Controller
@@ -17,6 +18,7 @@ class ConsumerReviewController extends Controller
             'order_number' => 'nullable|string|max:100',
             'type' => 'nullable|in:review,claim,suggestion',
             'message' => 'required|string|max:4000',
+            'photo' => 'nullable|image|mimes:jpeg,jpg,png,webp,heic|max:8192',
         ], [
             'name.required' => 'Ім\'я є обов\'язковим полем',
             'phone.required' => 'Номер телефону є обов\'язковим полем',
@@ -24,6 +26,9 @@ class ConsumerReviewController extends Controller
             'message.required' => 'Напишіть текст звернення',
             'message.max' => 'Текст не може перевищувати 4000 символів',
             'type.in' => 'Невірний тип звернення',
+            'photo.image' => 'Файл має бути зображенням',
+            'photo.mimes' => 'Допустимі формати: JPG, PNG, WEBP',
+            'photo.max' => 'Розмір фото не більше 8 МБ',
         ]);
 
         if ($validator->fails()) {
@@ -35,6 +40,11 @@ class ConsumerReviewController extends Controller
         }
 
         $type = $request->input('type', 'review') ?: 'review';
+        $photoPath = null;
+
+        if ($request->hasFile('photo')) {
+            $photoPath = $request->file('photo')->store('consumer-reviews', 'public');
+        }
 
         $review = ConsumerReview::create([
             'name' => $request->name,
@@ -43,6 +53,7 @@ class ConsumerReviewController extends Controller
             'order_number' => $request->order_number,
             'type' => $type,
             'message' => $request->message,
+            'photo' => $photoPath,
             'status' => 'new',
         ]);
 
@@ -53,7 +64,6 @@ class ConsumerReviewController extends Controller
                 'error' => $e->getMessage(),
                 'review_id' => $review->id,
             ]);
-            // Review is already saved — still return success so the lead is not lost
         }
 
         return response()->json([
@@ -83,10 +93,16 @@ class ConsumerReviewController extends Controller
         $text .= "\n🆔 ID: " . $review->id;
         $text .= "\n⏰ Час: " . now()->format('d.m.Y H:i:s');
 
+        if ($review->photo && Storage::disk('public')->exists($review->photo)) {
+            $absolute = Storage::disk('public')->path($review->photo);
+            $this->dispatchTelegramPhoto($text, $absolute);
+            return;
+        }
+
         $this->dispatchTelegram($text);
     }
 
-    private function dispatchTelegram(string $text): void
+    private function telegramCredentials(): array
     {
         if (!config('telegram.enabled', true)) {
             throw new \Exception('Telegram notifications are disabled');
@@ -99,20 +115,56 @@ class ConsumerReviewController extends Controller
             throw new \Exception('Telegram is not configured');
         }
 
-        $data = [
+        return [$botToken, $chatId];
+    }
+
+    private function dispatchTelegram(string $text): void
+    {
+        [$botToken, $chatId] = $this->telegramCredentials();
+
+        $this->curlTelegram(
+            "https://api.telegram.org/bot{$botToken}/sendMessage",
+            [
+                'chat_id' => $chatId,
+                'text' => $text,
+            ]
+        );
+    }
+
+    private function dispatchTelegramPhoto(string $caption, string $absolutePath): void
+    {
+        [$botToken, $chatId] = $this->telegramCredentials();
+
+        if (!is_readable($absolutePath)) {
+            $this->dispatchTelegram($caption . "\n\n🖼 Фото збережено, але не вдалося надіслати файл.");
+            return;
+        }
+
+        // Caption limit for Telegram photos is 1024 chars
+        $caption = mb_substr($caption, 0, 1024);
+
+        $post = [
             'chat_id' => $chatId,
-            'text' => $text,
+            'caption' => $caption,
+            'photo' => new \CURLFile($absolutePath),
         ];
 
-        $url = "https://api.telegram.org/bot{$botToken}/sendMessage";
+        $this->curlTelegram(
+            "https://api.telegram.org/bot{$botToken}/sendPhoto",
+            $post,
+            true
+        );
+    }
 
+    private function curlTelegram(string $url, array $data, bool $multipart = false): void
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_POST, 1);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $multipart ? $data : http_build_query($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
-        curl_setopt($ch, CURLOPT_TIMEOUT, 12);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
 
         $result = curl_exec($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
